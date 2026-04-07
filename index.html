@@ -3,18 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FamilyCare - Admin Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>FamilyCare - Admin Dashboard (ULTIMATE)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://meet.jit.si/external_api.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         @font-face { font-family: 'mainfront'; src: local('mainfront'); }
         :root {
-            --bg-color: #F1F5F9; --sidebar-bg: #ffffff; --card-bg: #FFFFFF; 
-            --primary: #4F46E5; --primary-hover: #4338CA;
+            --bg-color: #0F172A; --sidebar-bg: #1E293B; --card-bg: #1E293B; 
+            --primary: #3B82F6; --primary-hover: #2563EB;
             --success: #10B981; --danger: #EF4444; --warning: #F59E0B; --video: #8B5CF6;
-            --text-main: #0F172A; --text-sub: #64748B; --border: #E2E8F0;
+            --text-main: #F8FAFC; --text-sub: #94A3B8; --border: #334155;
             --radius-lg: 24px; --radius-md: 16px; --radius-sm: 10px;
         }
 
@@ -22,144 +24,161 @@
         body { display: flex; background: var(--bg-color); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
 
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 
-        .sidebar { width: 280px; background: var(--sidebar-bg); border-right: 1px solid var(--border); padding: 32px 24px; display: flex; flex-direction: column; gap: 12px; position: fixed; height: 100vh; z-index: 10; }
-        .brand { font-size: 26px; font-weight: 700; color: var(--primary); margin-bottom: 40px; display: flex; align-items: center; gap: 12px; }
+        .sidebar { width: 280px; background: var(--sidebar-bg); border-right: 1px solid var(--border); padding: 32px 24px; display: flex; flex-direction: column; gap: 12px; position: fixed; height: 100vh; z-index: 10; box-shadow: 5px 0 20px rgba(0,0,0,0.2); }
+        .brand { font-size: 26px; font-weight: 900; color: #38BDF8; margin-bottom: 40px; display: flex; align-items: center; gap: 12px; text-shadow: 0 0 15px rgba(56, 189, 248, 0.5); }
         .nav-item { padding: 16px 20px; border-radius: var(--radius-md); color: var(--text-sub); font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 16px; transition: all 0.3s; }
-        .nav-item:hover { background: #F8FAFC; color: var(--primary); transform: translateX(5px); }
-        .nav-item.active { background: var(--primary); color: white; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2); }
+        .nav-item:hover { background: #334155; color: var(--text-main); transform: translateX(5px); }
+        .nav-item.active { background: linear-gradient(135deg, var(--primary), #6366F1); color: white; box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3); }
 
         .main-content { margin-left: 280px; flex-grow: 1; padding: 40px; max-width: calc(100vw - 280px); }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
-        .greeting h1 { font-size: 32px; font-weight: 700; color: var(--text-main); }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; background: var(--card-bg); padding: 20px 30px; border-radius: var(--radius-lg); box-shadow: 0 10px 30px rgba(0,0,0,0.2); border: 1px solid var(--border); }
+        .greeting h1 { font-size: 32px; font-weight: 900; background: -webkit-linear-gradient(#38BDF8, #818CF8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .greeting p { font-size: 16px; color: var(--text-sub); margin-top: 4px; }
         
-        .btn { padding: 14px 28px; border-radius: var(--radius-md); font-weight: 600; font-size: 16px; cursor: pointer; border: none; display: flex; align-items: center; gap: 10px; justify-content: center; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .btn:active { transform: translateY(2px); box-shadow: none; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-success { background: var(--success); color: white; }
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-video { background: var(--video); color: white; }
+        .btn { padding: 14px 28px; border-radius: var(--radius-md); font-weight: 600; font-size: 16px; cursor: pointer; border: none; display: flex; align-items: center; gap: 10px; justify-content: center; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px; }
+        .btn:active { transform: translateY(2px); box-shadow: none !important; }
+        .btn-primary { background: linear-gradient(135deg, #3B82F6, #2563EB); color: white; box-shadow: 0 4px 15px rgba(59,130,246,0.4); }
+        .btn-success { background: linear-gradient(135deg, #10B981, #059669); color: white; box-shadow: 0 4px 15px rgba(16,185,129,0.4); }
+        .btn-danger { background: linear-gradient(135deg, #EF4444, #DC2626); color: white; box-shadow: 0 4px 15px rgba(239,68,68,0.4); }
+        .btn-video { background: linear-gradient(135deg, #8B5CF6, #6D28D9); color: white; box-shadow: 0 4px 15px rgba(139,92,246,0.4); }
+        .btn-warning { background: linear-gradient(135deg, #F59E0B, #D97706); color: white; box-shadow: 0 4px 15px rgba(245,158,11,0.4); }
 
         .view-section { display: none; animation: fadeIn 0.4s ease-out; }
         .view-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .dashboard-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 24px; }
-        .card { background: var(--card-bg); border-radius: var(--radius-lg); padding: 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid rgba(255,255,255,0.5); }
+        .card { background: var(--card-bg); border-radius: var(--radius-lg); padding: 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); border: 1px solid var(--border); position: relative; overflow: hidden; }
+        .card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #38BDF8, #818CF8); opacity: 0; transition: 0.3s; }
+        .card:hover::before { opacity: 1; }
         .col-4 { grid-column: span 4; }
         .col-6 { grid-column: span 6; }
         .col-8 { grid-column: span 8; }
         .col-12 { grid-column: span 12; }
-        .card-title { font-size: 20px; font-weight: 700; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+        .card-title { font-size: 20px; font-weight: 700; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; color: white; }
 
         .stat-card { display: flex; align-items: center; gap: 20px; }
-        .stat-icon { width: 60px; height: 60px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 28px; }
+        .stat-icon { width: 60px; height: 60px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 28px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text-sub); }
-        .form-control { width: 100%; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 16px; background: #F8FAFC; transition: 0.3s; }
-        .form-control:focus { outline: none; border-color: var(--primary); background: white; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+        .form-control { width: 100%; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 16px; background: #0F172A; color: white; transition: 0.3s; }
+        .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
 
         .image-preview { width: 100%; height: 250px; border-radius: var(--radius-md); border: 2px dashed var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-sub); overflow: hidden; margin-bottom: 20px; background-size: cover; background-position: center; }
-
-        .history-list { list-style: none; max-height: 500px; overflow-y: auto; padding-right: 10px; }
-        .history-item { display: flex; gap: 16px; padding: 16px; border-radius: var(--radius-md); margin-bottom: 12px; background: #F8FAFC; border: 1px solid var(--border); align-items: flex-start; }
-
-        .toast-container { position: fixed; top: 30px; right: 30px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
-        .toast { background: white; padding: 16px 24px; border-radius: var(--radius-md); box-shadow: 0 10px 40px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 12px; font-weight: 600; transform: translateX(120%); opacity: 0; transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); border-left: 6px solid; }
-        .toast.show { transform: translateX(0); opacity: 1; }
-        .toast-success { border-color: var(--success); }
+        
+        .history-list { list-style: none; max-height: 400px; overflow-y: auto; padding-right: 10px; }
+        .history-item { display: flex; gap: 16px; padding: 16px; border-radius: var(--radius-md); margin-bottom: 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); align-items: flex-start; transition: 0.2s; }
+        .history-item:hover { background: rgba(255,255,255,0.05); }
 
         .loader { display: none; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
-        .sos-monitor.active { background: #FEF2F2; border: 2px solid #FCA5A5; animation: pulseRed 2s infinite; }
+        
+        .sos-monitor.active { background: rgba(239, 68, 68, 0.1); border: 2px solid #EF4444; animation: pulseRed 2s infinite; }
         @keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 
-        .chart-container { position: relative; height: 300px; width: 100%; }
-        .pie-container { position: relative; height: 220px; width: 100%; display: flex; justify-content: center; }
-
+        /* Map Style */
+        #gps-map { width: 100%; height: 300px; border-radius: var(--radius-md); border: 2px solid var(--border); z-index: 1; }
+        .leaflet-container { font-family: 'Prompt', sans-serif; }
+        
+        /* Video Modal */
         #video-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0F172A; z-index: 10000; flex-direction: column; }
-        .video-header { padding: 15px 24px; background: #1E293B; display: flex; justify-content: space-between; align-items: center; }
+        .video-header { padding: 15px 24px; background: #1E293B; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
         #jitsi-container { flex-grow: 1; width: 100%; }
         
-        .mood-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; border-radius: var(--radius-md); background: #FFF7ED; border: 2px dashed #FDBA74; }
-        .mood-emoji { font-size: 60px; line-height: 1; margin-bottom: 10px; }
-        .mood-text { font-size: 18px; font-weight: 700; color: #C2410C; }
+        .intercom-panel { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 20px; border-radius: var(--radius-md); display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
-    <div class="toast-container" id="toast-container"></div>
-
     <div id="video-modal">
         <div class="video-header">
-            <span style="color: white; font-size: 20px; font-weight: 700;"><i class="fa-solid fa-video"></i> วีดีโอคอลครอบครัว</span>
+            <span style="color: white; font-size: 20px; font-weight: 700;"><i class="fa-solid fa-video" style="color: #38BDF8;"></i> ศูนย์บัญชาการวิดีโอ (Command Center)</span>
             <button onclick="endVideoCall()" style="background: #EF4444; color: white; border: none; padding: 10px 24px; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                <i class="fa-solid fa-phone-slash"></i> วางสาย
+                <i class="fa-solid fa-phone-slash"></i> ตัดสาย
             </button>
         </div>
         <div id="jitsi-container"></div>
     </div>
 
     <div class="sidebar">
-        <div class="brand"><i class="fa-solid fa-heart-pulse"></i> FamilyCare</div>
-        <div class="nav-item active" onclick="switchTab('view-dashboard', this)"><i class="fa-solid fa-border-all"></i> แดชบอร์ด</div>
-        <div class="nav-item" onclick="switchTab('view-pills', this)"><i class="fa-solid fa-pills"></i> สต๊อกและตารางยา</div>
-        <div class="nav-item" onclick="switchTab('view-calendar', this)"><i class="fa-regular fa-calendar-check"></i> นัดหมายคุณหมอ</div>
+        <div class="brand"><i class="fa-solid fa-satellite-dish fa-beat"></i> FamilyCare <span style="font-size: 12px; color: #EF4444; vertical-align: top;">ULTIMATE</span></div>
+        <div class="nav-item active" onclick="switchTab('view-dashboard', this)"><i class="fa-solid fa-radar"></i> เรดาร์ติดตามผล</div>
+        <div class="nav-item" onclick="switchTab('view-pills', this)"><i class="fa-solid fa-capsules"></i> สต๊อกและตารางยา</div>
+        <div class="nav-item" onclick="switchTab('view-calendar', this)"><i class="fa-solid fa-user-doctor"></i> นัดหมายแพทย์</div>
         <div class="nav-item" onclick="switchTab('view-gallery', this)"><i class="fa-solid fa-images"></i> แกลเลอรี่ครอบครัว</div>
     </div>
 
     <div class="main-content">
         <div class="top-bar">
             <div class="greeting">
-                <h1 id="page-title">ภาพรวมการดูแล (Overview)</h1>
-                <p>ระบบเชื่อมต่อกับหน้าจอคุณตาแบบ Real-time</p>
+                <h1 id="page-title">ระบบเรดาร์ติดตามผล (Live Radar)</h1>
+                <p>ควบคุมการดูแลแบบ Real-Time ไร้ขีดจำกัด</p>
             </div>
             <div style="display: flex; gap: 12px;">
-                <button class="btn btn-video" onclick="startVideoCall('คุณลูกหลาน')">
-                    <i class="fa-solid fa-video"></i> <span>วีดีโอคอลหาคุณตา</span>
+                <button class="btn btn-video" onclick="startVideoCall('ผู้บัญชาการ')">
+                    <i class="fa-solid fa-video"></i> <span>วิดีโอคอลสด</span>
                 </button>
                 <button class="btn btn-success" onclick="familyCheckIn()" id="btn-checkin">
-                    <i class="fa-solid fa-location-dot"></i> <span>Check-in มาหาแล้ว</span>
+                    <i class="fa-solid fa-location-dot"></i> <span>เช็คอินที่บ้าน</span>
                     <i class="fa-solid fa-spinner loader" id="load-checkin"></i>
                 </button>
             </div>
         </div>
 
         <div id="view-dashboard" class="view-section active">
+            
+            <div class="intercom-panel">
+                <div style="width: 100%; font-weight: 700; color: #FCD34D; margin-bottom: 10px;"><i class="fa-solid fa-bullhorn fa-shake"></i> ระบบประกาศเสียง Intercom ข้ามมิติ (ดังที่เครื่องคุณตา)</div>
+                <button class="btn btn-warning" onclick="sendIntercom('คุณตาครับ ถึงเวลากินยาแล้วครับ อย่าลืมกินยานะครับ')" id="btn-ic-1">
+                    <i class="fa-solid fa-pills"></i> เตือนกินยา <i class="fa-solid fa-spinner loader" id="load-ic-1"></i>
+                </button>
+                <button class="btn btn-warning" onclick="sendIntercom('คุณตาครับ ดื่มน้ำเยอะๆ นะครับ รักษาสุขภาพด้วย')" id="btn-ic-2">
+                    <i class="fa-solid fa-glass-water"></i> เตือนดื่มน้ำ <i class="fa-solid fa-spinner loader" id="load-ic-2"></i>
+                </button>
+                <button class="btn btn-warning" onclick="sendIntercom('หนูคิดถึงคุณตานะคะ เดี๋ยวว่างๆ จะโทรหานะ')" id="btn-ic-3">
+                    <i class="fa-solid fa-heart"></i> ส่งความรัก <i class="fa-solid fa-spinner loader" id="load-ic-3"></i>
+                </button>
+            </div>
+
             <div class="dashboard-grid">
                 <div class="card col-12 sos-monitor" id="sos-card">
-                    <div class="card-title" id="sos-title" style="color: var(--text-main);"><i class="fa-solid fa-shield-heart" style="color: var(--success);"></i> ระบบเฝ้าระวังฉุกเฉิน (ปกติ)</div>
-                    <div id="sos-display" style="display: flex; justify-content: space-between; align-items: center; padding: 10px;">
-                        <span style="font-size: 18px; color: var(--text-sub);">กำลังดึงสถานะล่าสุด...</span>
+                    <div class="card-title" id="sos-title" style="color: white;"><i class="fa-solid fa-shield-heart" style="color: var(--success);"></i> ระบบเฝ้าระวังฉุกเฉิน (ปกติ)</div>
+                    <div style="display: flex; gap: 20px; align-items: flex-start;">
+                        <div id="sos-display" style="flex: 1; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 12px; height: 300px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                            <span style="font-size: 18px; color: var(--success);"><i class="fa-solid fa-circle-check"></i> ไม่พบเหตุฉุกเฉินในขณะนี้</span>
+                        </div>
+                        <div style="flex: 2;">
+                            <div id="gps-map"></div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="card col-4 stat-card">
-                    <div class="stat-icon" style="background: #EEF2FF; color: var(--primary);"><i class="fa-solid fa-face-smile"></i></div>
+                    <div class="stat-icon" style="color: #38BDF8;"><i class="fa-solid fa-face-smile"></i></div>
                     <div class="stat-info">
-                        <h3>อารมณ์/อาการวันนี้</h3>
-                        <p id="stat-mood" style="font-size: 20px; margin-top: 4px;">กำลังโหลด...</p>
+                        <h3 style="color: var(--text-sub); font-size: 14px;">อารมณ์วันนี้</h3>
+                        <p id="stat-mood" style="font-size: 22px; font-weight: 700; color: white;">กำลังโหลด...</p>
                     </div>
                 </div>
                 <div class="card col-4 stat-card">
-                    <div class="stat-icon" style="background: #ECFDF5; color: var(--success);"><i class="fa-solid fa-capsules"></i></div>
-                    <div class="stat-info"><h3>การกินยาสัปดาห์นี้</h3><p>85% <span style="font-size: 14px; color: var(--success); font-weight: 500;">สม่ำเสมอ</span></p></div>
+                    <div class="stat-icon" style="color: var(--success);"><i class="fa-solid fa-capsules"></i></div>
+                    <div class="stat-info"><h3 style="color: var(--text-sub); font-size: 14px;">สถานะการกินยา</h3><p style="font-size: 22px; font-weight: 700; color: white;">รักษาวินัยดีเยี่ยม</p></div>
                 </div>
                 <div class="card col-4 stat-card">
-                    <div class="stat-icon" style="background: #FEF2F2; color: var(--danger);"><i class="fa-solid fa-heart-pulse"></i></div>
-                    <div class="stat-info"><h3>นัดพบหมอครั้งต่อไป</h3><p id="stat-appoint">กำลังโหลด...</p></div>
+                    <div class="stat-icon" style="color: var(--danger);"><i class="fa-solid fa-heart-pulse"></i></div>
+                    <div class="stat-info"><h3 style="color: var(--text-sub); font-size: 14px;">นัดแพทย์ถัดไป</h3><p id="stat-appoint" style="font-size: 18px; font-weight: 700; color: white;">กำลังโหลด...</p></div>
                 </div>
 
                 <div class="card col-8">
-                    <div class="card-title"><i class="fa-solid fa-chart-area" style="color: var(--primary);"></i> สถิติความดันและชีพจร</div>
-                    <div class="chart-container"><canvas id="vitalsChart"></canvas></div>
+                    <div class="card-title"><i class="fa-solid fa-chart-area" style="color: var(--primary);"></i> กราฟชีพจร (AI Analysis)</div>
+                    <div class="chart-container" style="position: relative; height: 300px;"><canvas id="vitalsChart"></canvas></div>
                 </div>
                 <div class="card col-4">
-                    <div class="card-title"><i class="fa-solid fa-clock-rotate-left" style="color: var(--primary);"></i> ประวัติกิจกรรมล่าสุด</div>
-                    <ul id="history-list" class="history-list" style="max-height: 300px;"><div style="text-align: center; padding: 40px; color: var(--text-sub);">กำลังโหลด...</div></ul>
+                    <div class="card-title"><i class="fa-solid fa-server" style="color: var(--primary);"></i> บันทึกระบบ (System Logs)</div>
+                    <ul id="history-list" class="history-list"><div style="text-align: center; padding: 40px; color: var(--text-sub);">Connecting to server...</div></ul>
                 </div>
             </div>
         </div>
@@ -170,19 +189,18 @@
                     <div class="card-title"><i class="fa-solid fa-prescription-bottle-medical" style="color: var(--primary);"></i> เพิ่มตารางยาใหม่</div>
                     <div class="form-group"><label>ชื่อยา / ปริมาณ</label><input type="text" id="pill-name" class="form-control"></div>
                     <div class="form-group"><label>เวลา</label><select id="pill-time" class="form-control"><option>เช้า</option><option>กลางวัน</option><option>เย็น</option><option>ก่อนนอน</option></select></div>
-                    <button class="btn btn-primary" style="width: 100%;" onclick="saveData('pill')" id="btn-pill">บันทึกตารางยา <i class="fa-solid fa-spinner loader" id="load-pill"></i></button>
+                    <button class="btn btn-primary" style="width: 100%;" onclick="saveData('pill')" id="btn-pill">บันทึกและส่งข้อมูล <i class="fa-solid fa-spinner loader" id="load-pill"></i></button>
                 </div>
-                <div class="card col-6"><div class="card-title"><i class="fa-solid fa-chart-pie" style="color: var(--warning);"></i> สถิติการกินยา</div><div class="pie-container"><canvas id="pillChart"></canvas></div></div>
             </div>
         </div>
         
         <div id="view-calendar" class="view-section">
             <div class="dashboard-grid">
                 <div class="card col-6">
-                    <div class="card-title"><i class="fa-regular fa-calendar-plus" style="color: var(--primary);"></i> เพิ่มนัดหมายคุณหมอ</div>
-                    <div class="form-group"><label>วันที่และเวลา</label><input type="datetime-local" id="appoint-time" class="form-control"></div>
-                    <div class="form-group"><label>สถานที่ / สาเหตุ</label><input type="text" id="appoint-desc" class="form-control"></div>
-                    <button class="btn btn-primary" style="width: 100%;" onclick="saveData('appoint')" id="btn-appoint">บันทึกนัดหมาย <i class="fa-solid fa-spinner loader" id="load-appoint"></i></button>
+                    <div class="card-title"><i class="fa-regular fa-calendar-plus" style="color: var(--primary);"></i> แจ้งเตือนนัดหมาย</div>
+                    <div class="form-group"><label>วันที่และเวลา</label><input type="datetime-local" id="appoint-time" class="form-control" style="color-scheme: dark;"></div>
+                    <div class="form-group"><label>โรงพยาบาล / แผนก</label><input type="text" id="appoint-desc" class="form-control"></div>
+                    <button class="btn btn-primary" style="width: 100%;" onclick="saveData('appoint')" id="btn-appoint">ตั้งค่าการแจ้งเตือน <i class="fa-solid fa-spinner loader" id="load-appoint"></i></button>
                 </div>
             </div>
         </div>
@@ -190,14 +208,14 @@
         <div id="view-gallery" class="view-section">
             <div class="dashboard-grid">
                 <div class="card col-6">
-                    <div class="card-title"><i class="fa-solid fa-image" style="color: var(--primary);"></i> อัปโหลดรูปภาพจากเครื่อง</div>
+                    <div class="card-title"><i class="fa-solid fa-cloud-arrow-up" style="color: var(--primary);"></i> อัปโหลดรูปภาพครอบครัว</div>
                     <div class="form-group">
-                        <label>เลือกไฟล์รูปภาพ</label>
+                        <label>เลือกไฟล์รูปภาพ (ระบบจะบีบอัดอัตโนมัติ)</label>
                         <input type="file" id="photo-file" class="form-control" accept="image/*" onchange="processImage(event)">
                     </div>
-                    <button class="btn btn-primary" style="width: 100%;" onclick="saveData('photo')" id="btn-photo">ส่งรูปเข้าจอมือถือคุณตา <i class="fa-solid fa-spinner loader" id="load-photo"></i></button>
+                    <button class="btn btn-primary" style="width: 100%;" onclick="saveData('photo')" id="btn-photo">ส่งรูปเข้าจอหลัก <i class="fa-solid fa-spinner loader" id="load-photo"></i></button>
                 </div>
-                <div class="card col-6"><div class="card-title">Preview</div><div class="image-preview" id="img-preview"><i class="fa-solid fa-photo-film fa-2x"></i></div></div>
+                <div class="card col-6"><div class="card-title">Preview (Live)</div><div class="image-preview" id="img-preview"><i class="fa-solid fa-satellite fa-3x" style="opacity: 0.3;"></i></div></div>
             </div>
         </div>
     </div>
@@ -205,15 +223,49 @@
     <script>
         const scriptUrl = "https://script.google.com/macros/s/AKfycby8enGt2JJA8RwqoyX4xcQXGjpDBVpGly5QKxM_WrR5hMJqEW2gJu_rCL6063BNXPY/exec";
         let api = null;
-        let compressedImageData = ""; // ตัวแปรเก็บรูปที่โดนบีบอัดแล้ว
+        let compressedImageData = ""; 
+        let map, mapMarker;
+
+        // ฟังก์ชันเริ่มแผนที่ Leaflet
+        function initMap() {
+            // ตั้งค่าเริ่มต้นที่ประเทศไทย
+            map = L.map('gps-map').setView([13.7563, 100.5018], 5);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap &copy; CARTO'
+            }).addTo(map);
+        }
+
+        function updateMapLocation(lat, lng) {
+            if(!map) return;
+            map.setView([lat, lng], 16);
+            if(mapMarker) map.removeLayer(mapMarker);
+            
+            // สร้างไอคอนกระพริบสีแดง
+            let customIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: "<div style='background-color:#EF4444; width:20px; height:20px; border-radius:50%; border:3px solid white; box-shadow: 0 0 15px #EF4444; animation: pulseRed 1.5s infinite;'></div>",
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+
+            mapMarker = L.marker([lat, lng], {icon: customIcon}).addTo(map)
+                .bindPopup('<b style="color:black;">พิกัดฉุกเฉินล่าสุด!</b>').openPopup();
+        }
+
+        window.onload = () => { 
+            initCharts(); 
+            initMap();
+            loadHistory(); 
+            setInterval(loadHistory, 10000); 
+        };
 
         function startVideoCall(userName) {
             document.getElementById('video-modal').style.display = 'flex';
             const domain = 'meet.jit.si';
             const options = {
-                roomName: 'FamilyCare_PrivateRoom_889922', width: '100%', height: '100%',
+                roomName: 'FamilyCare_PrivateRoom_EXTREME99', width: '100%', height: '100%',
                 parentNode: document.querySelector('#jitsi-container'), userInfo: { displayName: userName },
-                interfaceConfigOverwrite: { TOOLBAR_BUTTONS: ['microphone', 'camera', 'desktop', 'fullscreen', 'hangup', 'chat'], SHOW_JITSI_WATERMARK: false, SHOW_WATERMARK_FOR_GUESTS: false }
+                interfaceConfigOverwrite: { TOOLBAR_BUTTONS: ['microphone', 'camera', 'desktop', 'fullscreen', 'hangup', 'chat'], SHOW_JITSI_WATERMARK: false }
             };
             api = new JitsiMeetExternalAPI(domain, options);
             api.addListener('videoConferenceLeft', () => { endVideoCall(); });
@@ -224,53 +276,34 @@
             document.getElementById('video-modal').style.display = 'none';
         }
 
-        window.onload = () => { initCharts(); loadHistory(); setInterval(loadHistory, 10000); };
-
         function switchTab(tabId, el) {
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             el.classList.add('active');
-            const titles = { 'view-dashboard': 'ภาพรวมการดูแล', 'view-pills': 'จัดการสต๊อกและตารางยา', 'view-calendar': 'ปฏิทินนัดหมายคุณหมอ', 'view-gallery': 'แกลเลอรี่รูปภาพครอบครัว' };
+            const titles = { 'view-dashboard': 'ระบบเรดาร์ติดตามผล (Live Radar)', 'view-pills': 'ระบบจัดการคลังยา', 'view-calendar': 'ปฏิทินและนัดหมายทางการแพทย์', 'view-gallery': 'ระบบซิงค์รูปภาพ (Cloud Sync)' };
             document.getElementById('page-title').innerText = titles[tabId];
+            if(tabId === 'view-dashboard' && map) {
+                setTimeout(() => { map.invalidateSize(); }, 200); // แก้บัคแผนที่ไม่โหลดเต็มจอ
+            }
         }
 
-        // ฟังก์ชันอ่านไฟล์รูป ย่อขนาด และแปลงเป็น Base64
         function processImage(event) {
             const file = event.target.files[0];
             const preview = document.getElementById('img-preview');
-            
-            if (!file) {
-                preview.style.backgroundImage = 'none'; 
-                preview.innerHTML = '<i class="fa-solid fa-photo-film fa-2x"></i>';
-                compressedImageData = "";
-                return;
-            }
-
+            if (!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    // ตั้งค่าความกว้างสูงสุดให้รูปไม่ใหญ่เกินไป จะได้ไม่โหลดช้าและเซฟลง Sheet ได้
-                    const MAX_WIDTH = 500; 
-                    const MAX_HEIGHT = 500;
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > height) {
-                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                    } else {
-                        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-                    }
+                    const MAX_WIDTH = 500, MAX_HEIGHT = 500;
+                    let width = img.width, height = img.height;
+                    if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } } 
+                    else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
                     canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    // แปลงเป็น JPEG แบบลดคุณภาพนิดหน่อย (0.6) เพื่อลดขนาดไฟล์
+                    const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height);
                     compressedImageData = canvas.toDataURL('image/jpeg', 0.6);
-                    
-                    // แสดง Preview
                     preview.style.backgroundImage = `url('${compressedImageData}')`;
                     preview.innerHTML = '';
                 };
@@ -279,44 +312,42 @@
             reader.readAsDataURL(file);
         }
 
-        function showToast(message) {
-            const container = document.getElementById('toast-container'); const toast = document.createElement('div');
-            toast.className = `toast toast-success`; toast.innerHTML = `<i class="fa-solid fa-circle-check" style="color: var(--success); font-size: 24px;"></i> <span>${message}</span>`;
-            container.appendChild(toast);
-            setTimeout(() => toast.classList.add('show'), 10); setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 3000);
-        }
-
         async function executeAction(action, details, btnId, loadId) {
             let btn = document.getElementById(btnId); let loader = document.getElementById(loadId);
-            btn.disabled = true; loader.style.display = 'inline-block';
+            if(btn) btn.disabled = true; if(loader) loader.style.display = 'inline-block';
             try {
                 await fetch(scriptUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: action, details: details }), headers: { "Content-Type": "text/plain;charset=utf-8" }});
-                showToast("บันทึกและซิงค์ข้อมูลเรียบร้อย!"); loadHistory();
-            } catch (e) { alert("Error connecting"); } finally { btn.disabled = false; loader.style.display = 'none'; }
+                loadHistory();
+            } catch (e) { alert("Connection Error"); } 
+            finally { if(btn) btn.disabled = false; if(loader) loader.style.display = 'none'; }
         }
 
-        function familyCheckIn() { executeAction('family_checkin', 'เช็คอินมาหาแล้ว', 'btn-checkin', 'load-checkin'); }
+        // ฟังชันก์ใหม่! ยิงเสียงเตือนไปเครื่องคุณตา
+        function sendIntercom(message) {
+            let id = event.target.id;
+            executeAction('alarm', message, id, id.replace('btn', 'load'));
+        }
+
+        function familyCheckIn() { executeAction('family_checkin', 'ลูกหลานเช็คอินระบบ', 'btn-checkin', 'load-checkin'); }
         
         function saveData(type) {
             if(type === 'appoint') {
                 const time = document.getElementById('appoint-time').value; const desc = document.getElementById('appoint-desc').value;
-                if(!time || !desc) return alert("กรอกข้อมูลให้ครบ!"); executeAction('save_appointment', `${desc} เวลา ${time}`, 'btn-appoint', 'load-appoint'); document.getElementById('appoint-desc').value = '';
+                if(!time || !desc) return alert("ข้อมูลไม่ครบ!"); executeAction('save_appointment', `${desc} เวลา ${time}`, 'btn-appoint', 'load-appoint'); document.getElementById('appoint-desc').value = '';
             } 
             else if(type === 'pill') {
                 const name = document.getElementById('pill-name').value; const time = document.getElementById('pill-time').value;
-                if(!name) return alert("ใส่ชื่อยาด้วย!"); executeAction('save_pill', `${name} (${time})`, 'btn-pill', 'load-pill'); document.getElementById('pill-name').value = '';
+                if(!name) return alert("ข้อมูลไม่ครบ!"); executeAction('save_pill', `${name} (${time})`, 'btn-pill', 'load-pill'); document.getElementById('pill-name').value = '';
             }
             else if(type === 'photo') {
-                if(!compressedImageData) return alert("กรุณาเลือกรูปภาพก่อน!"); 
+                if(!compressedImageData) return alert("ยังไม่ได้เลือกรูป!"); 
                 executeAction('save_photo', compressedImageData, 'btn-photo', 'load-photo'); 
-                document.getElementById('photo-file').value = ''; 
-                compressedImageData = "";
-                document.getElementById('img-preview').style.backgroundImage = 'none'; 
-                document.getElementById('img-preview').innerHTML = '<i class="fa-solid fa-photo-film fa-2x"></i>';
+                document.getElementById('photo-file').value = ''; compressedImageData = "";
+                document.getElementById('img-preview').style.backgroundImage = 'none'; document.getElementById('img-preview').innerHTML = '<i class="fa-solid fa-satellite fa-3x" style="opacity: 0.3;"></i>';
             }
         }
 
-        function resolveSOS() { executeAction('sos_resolved', 'ลูกหลานรับเรื่องและเคลียร์เคสแล้ว', 'btn-resolve', 'load-resolve'); setTimeout(loadHistory, 1500); }
+        function resolveSOS() { executeAction('sos_resolved', 'เคลียร์เคสฉุกเฉินแล้ว', 'btn-resolve', 'load-resolve'); setTimeout(loadHistory, 1500); }
 
         async function loadHistory() {
             try {
@@ -324,14 +355,14 @@
                 if (result.status === "success") {
                     const list = document.getElementById('history-list'); list.innerHTML = "";
                     const rows = result.data.reverse();
-                    let isSOSActive = false, latestAppoint = "ยังไม่มีนัดหมาย", latestMood = "รออัปเดต...";
+                    let isSOSActive = false, latestAppoint = "-", latestMood = "-";
 
                     for (let row of rows) {
                         let action = row[1], detail = row[2];
                         if(action === "sos_resolved" && !isSOSActive) break; 
                         if(action === "sos" && !isSOSActive) { isSOSActive = true; activateSOSMonitor(detail); }
-                        if(action === "save_appointment" && latestAppoint === "ยังไม่มีนัดหมาย") { latestAppoint = detail.split(" เวลา ")[0]; }
-                        if(action === "mood" && latestMood === "รออัปเดต...") { latestMood = detail; }
+                        if(action === "save_appointment" && latestAppoint === "-") { latestAppoint = detail.split(" เวลา ")[0]; }
+                        if(action === "mood" && latestMood === "-") { latestMood = detail; }
                     }
 
                     if(!isSOSActive) deactivateSOSMonitor(); 
@@ -340,19 +371,20 @@
 
                     rows.forEach(row => {
                         if(row[0] === "" || row[1] === "action") return;
-                        let dateStr = new Date(row[0]).toLocaleString('th-TH', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
-                        let action = row[1], detail = row[2], icon = '<i class="fa-solid fa-circle-info"></i>', color = '#64748B';
+                        let dateStr = new Date(row[0]).toLocaleString('en-GB', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
+                        let action = row[1], detail = row[2], icon = '<i class="fa-solid fa-terminal"></i>', color = '#94A3B8';
 
-                        if(action === "sos") { icon = '<i class="fa-solid fa-truck-medical"></i>'; color = 'var(--danger)'; }
-                        else if(action === "pill") { icon = '<i class="fa-solid fa-pills"></i>'; color = 'var(--success)'; }
-                        else if(action.includes("save_appoint")) { icon = '<i class="fa-regular fa-calendar-check"></i>'; color = 'var(--primary)'; }
-                        else if(action === "save_pill") { icon = '<i class="fa-solid fa-prescription-bottle"></i>'; color = 'var(--warning)'; detail = "อัปเดตตารางยา: " + detail; }
-                        else if(action === "family_checkin") { icon = '<i class="fa-solid fa-house-user"></i>'; color = '#059669'; }
-                        else if(action === "save_photo") { icon = '<i class="fa-solid fa-image"></i>'; color = '#F59E0B'; detail = "อัปเดตรูปครอบครัวแล้ว"; }
+                        if(action === "sos") { icon = '<i class="fa-solid fa-triangle-exclamation"></i>'; color = '#EF4444'; }
+                        else if(action === "pill") { icon = '<i class="fa-solid fa-check"></i>'; color = '#10B981'; }
+                        else if(action.includes("save_appoint")) { icon = '<i class="fa-regular fa-calendar-plus"></i>'; color = '#3B82F6'; }
+                        else if(action === "save_pill") { icon = '<i class="fa-solid fa-flask"></i>'; color = '#F59E0B'; }
+                        else if(action === "family_checkin") { icon = '<i class="fa-solid fa-satellite-dish"></i>'; color = '#059669'; }
+                        else if(action === "save_photo") { icon = '<i class="fa-solid fa-cloud-arrow-up"></i>'; color = '#8B5CF6'; }
                         else if(action === "sos_resolved") { icon = '<i class="fa-solid fa-shield-check"></i>'; color = '#10B981'; }
-                        else if(action === "mood") { icon = '<i class="fa-solid fa-face-smile"></i>'; color = '#D97706'; detail = "อัปเดตอารมณ์: " + detail; }
+                        else if(action === "mood") { icon = '<i class="fa-solid fa-face-smile"></i>'; color = '#38BDF8'; }
+                        else if(action === "alarm") { icon = '<i class="fa-solid fa-bullhorn"></i>'; color = '#FCD34D'; detail = "สั่งประกาศเสียง: " + detail; }
                         
-                        list.innerHTML += `<li class="history-item"><div style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; color: white; flex-shrink: 0; background: ${color};">${icon}</div><div><div style="font-size: 16px; font-weight: 600; color: var(--text-main);">${detail}</div><div style="color: var(--text-sub); font-size: 13px; font-weight: 500;">${dateStr}</div></div></li>`;
+                        list.innerHTML += `<li class="history-item"><div style="width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: ${color}; background: rgba(255,255,255,0.05); flex-shrink: 0;">${icon}</div><div><div style="font-size: 14px; font-weight: 500; color: white;">${detail}</div><div style="color: var(--text-sub); font-size: 12px; margin-top: 2px;">${dateStr}</div></div></li>`;
                     });
                 }
             } catch (e) {}
@@ -360,23 +392,36 @@
 
         function activateSOSMonitor(detail) {
             let card = document.getElementById('sos-card'); let display = document.getElementById('sos-display');
-            document.getElementById('sos-title').innerHTML = '<i class="fa-solid fa-triangle-exclamation fa-fade" style="color: var(--danger);"></i> แจ้งเตือนฉุกเฉิน (ACTION REQUIRED)';
+            document.getElementById('sos-title').innerHTML = '<i class="fa-solid fa-siren-on fa-spin" style="color: var(--danger);"></i> ตรวจพบสัญญาณฉุกเฉิน (ACTION REQUIRED!)';
             card.classList.add('active');
-            let mapBtn = detail.includes("ไม่ทราบพิกัด") ? `<div style="font-weight:700; color:var(--danger); font-size:20px;">ไม่ทราบพิกัด GPS โปรดโทรศัพท์ด่วน!</div>` : `<a href="${detail.split('พิกัด: ')[1]}" target="_blank" class="btn btn-danger" style="text-decoration:none;"><i class="fa-solid fa-map-location-dot"></i> เปิดแผนที่นำทาง</a>`;
-            display.innerHTML = `<div>${mapBtn}</div><button class="btn btn-success" id="btn-resolve" onclick="resolveSOS()"><i class="fa-solid fa-check-double"></i> <span>รับเรื่องและเคลียร์เคส</span><i class="fa-solid fa-spinner loader" id="load-resolve"></i></button>`;
+            
+            // ดึงพิกัดจาก URL เพื่อเอามาจุดบนแผนที่
+            let lat = 13.7563, lng = 100.5018; // Default
+            let match = detail.match(/q=([\d.-]+),([\d.-]+)/);
+            if(match) {
+                lat = parseFloat(match[1]); lng = parseFloat(match[2]);
+                updateMapLocation(lat, lng);
+            }
+
+            display.innerHTML = `<div style="text-align:center; margin-bottom:15px;">
+                <i class="fa-solid fa-triangle-exclamation fa-3x" style="color: var(--danger); margin-bottom: 10px;"></i>
+                <div style="font-size:18px; font-weight:700; color:white;">ได้รับแจ้งเหตุฉุกเฉิน!</div>
+                <div style="font-size:14px; color:var(--text-sub);">กำลังระบุตำแหน่งดาวเทียม...</div>
+            </div>
+            <button class="btn btn-danger" id="btn-resolve" onclick="resolveSOS()" style="width:100%; box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);"><i class="fa-solid fa-check-double"></i> <span>เคลียร์สถานการณ์</span><i class="fa-solid fa-spinner loader" id="load-resolve"></i></button>`;
         }
 
         function deactivateSOSMonitor() {
             let card = document.getElementById('sos-card'); document.getElementById('sos-title').innerHTML = '<i class="fa-solid fa-shield-heart" style="color: var(--success);"></i> ระบบเฝ้าระวังฉุกเฉิน (ปกติ)';
-            card.classList.remove('active'); document.getElementById('sos-display').innerHTML = `<span style="font-size: 16px; color: var(--text-sub);"><i class="fa-solid fa-circle-check" style="color: var(--success);"></i> ไม่มีเหตุฉุกเฉินในขณะนี้</span>`;
+            card.classList.remove('active'); document.getElementById('sos-display').innerHTML = `<span style="font-size: 18px; color: var(--success);"><i class="fa-solid fa-circle-check"></i> ไม่พบเหตุฉุกเฉินในขณะนี้</span>`;
+            if(mapMarker) { map.removeLayer(mapMarker); mapMarker = null; }
+            if(map) map.setView([13.7563, 100.5018], 5);
         }
 
         function initCharts() {
             const ctxVitals = document.getElementById('vitalsChart').getContext('2d');
-            let gradientBlue = ctxVitals.createLinearGradient(0, 0, 0, 400); gradientBlue.addColorStop(0, 'rgba(79, 70, 229, 0.4)'); gradientBlue.addColorStop(1, 'rgba(79, 70, 229, 0.0)');
-            new Chart(ctxVitals, { type: 'line', data: { labels: ['จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.', 'อา.'], datasets: [ { label: 'ความดันตัวบน', data: [120, 125, 130, 122, 118, 124, 121], borderColor: '#4F46E5', backgroundColor: gradientBlue, fill: true, tension: 0.4 }, { label: 'ชีพจร', data: [72, 75, 78, 71, 74, 76, 73], borderColor: '#EF4444', tension: 0.4, borderDash: [5, 5] } ] }, options: { responsive: true, maintainAspectRatio: false } });
-            const ctxPill = document.getElementById('pillChart').getContext('2d');
-            new Chart(ctxPill, { type: 'doughnut', data: { labels: ['กินตรงเวลา', 'ลืมกิน'], datasets: [{ data: [85, 15], backgroundColor: ['#10B981', '#F1F5F9'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '75%' } });
+            let gradientBlue = ctxVitals.createLinearGradient(0, 0, 0, 400); gradientBlue.addColorStop(0, 'rgba(56, 189, 248, 0.4)'); gradientBlue.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+            new Chart(ctxVitals, { type: 'line', data: { labels: ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00'], datasets: [ { label: 'อัตราการเต้นหัวใจ (BPM)', data: [72, 75, 78, 71, 74, 82, 73], borderColor: '#38BDF8', backgroundColor: gradientBlue, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#38BDF8', pointRadius: 4 } ] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94A3B8' } }, x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94A3B8' } } }, plugins: { legend: { labels: { color: 'white' } } } } });
         }
     </script>
 </body>
