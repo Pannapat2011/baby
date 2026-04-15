@@ -3,288 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elderly Care PRO - Maximize Accessibility</title>
+    <title>จอคุณตา (Elderly Care)</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <script src="https://meet.jit.si/external_api.js"></script>
     <style>
-        :root { 
-            --bg: #F0F4F8; --primary: #2563EB; --danger: #DC2626; 
-            --success: #16A34A; --warning: #EA580C; --text: #1E293B; 
-            --card-bg: #FFFFFF;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Prompt', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: var(--text); padding: 20px; padding-bottom: 140px; overflow-x: hidden; }
+        :root { --bg: #F8FAFC; --primary: #2563EB; --danger: #DC2626; --text: #0F172A; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Prompt', sans-serif; user-select: none; }
+        body { background: var(--bg); color: var(--text); padding: 20px; padding-bottom: 150px; }
+
+        /* นาฬิกาและหัวเว็บ */
+        .header { text-align: center; margin-bottom: 30px; background: white; padding: 20px; border-radius: 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .clock { font-size: 80px; font-weight: 900; color: var(--primary); line-height: 1; }
         
-        /* Utility */
-        .shadow-sm { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        .btn-active:active { transform: scale(0.95); transition: 0.1s; }
+        /* ข้อมูลจากลูกหลาน */
+        .info-box { background: #FEF3C7; border: 5px solid #F59E0B; padding: 25px; border-radius: 30px; margin-bottom: 25px; }
+        .info-title { font-size: 28px; color: #B45309; font-weight: 800; margin-bottom: 10px; }
+        .info-text { font-size: 36px; font-weight: 900; color: #78350F; line-height: 1.3; }
 
-        /* Start Screen */
-        #start-overlay { position: fixed; inset: 0; background: var(--primary); z-index: 100000; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; }
-        .btn-start { background: white; color: var(--primary); border: none; padding: 25px 50px; border-radius: 50px; font-size: 32px; font-weight: 900; box-shadow: 0 10px 0 #1D4ED8; cursor: pointer; margin-top: 30px; }
+        .info-box.blue { background: #E0E7FF; border-color: #6366F1; }
+        .info-box.blue .info-title { color: #4338CA; }
+        .info-box.blue .info-text { color: #312E81; }
 
-        /* Layout */
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .clock-container { text-align: right; }
-        .clock-time { font-size: 48px; font-weight: 900; color: var(--primary); line-height: 1; }
-        
-        .btn-morning { background: linear-gradient(135deg, #F59E0B, #D97706); color: white; border: none; padding: 15px 25px; border-radius: 20px; font-size: 24px; font-weight: 800; box-shadow: 0 8px 0 #92400E; display: flex; align-items: center; gap: 10px; }
+        /* ปุ่มกด */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .btn-big { font-size: 32px; font-weight: 900; padding: 40px 20px; border-radius: 30px; border: none; color: white; display: flex; flex-direction: column; align-items: center; gap: 15px; box-shadow: 0 12px 0 rgba(0,0,0,0.2); cursor: pointer; }
+        .btn-big:active { transform: translateY(10px); box-shadow: none; }
+        .btn-water { background: #0EA5E9; }
+        .btn-pill { background: #10B981; }
 
-        /* Features */
-        .btn-walkie { width: 100%; background: #7C3AED; color: white; border: none; padding: 25px; border-radius: 25px; font-size: 32px; font-weight: 900; box-shadow: 0 10px 0 #5B21B6; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 15px; }
-        .btn-walkie.recording { background: var(--danger); animation: pulse 1s infinite; box-shadow: 0 10px 0 #991B1B; }
-
-        .grid-main { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .card { background: var(--card-bg); border-radius: 25px; padding: 20px; border: 3px solid #E2E8F0; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; }
-        .card-full { grid-column: span 2; }
-        .card-title { font-size: 22px; font-weight: 800; margin-bottom: 10px; width: 100%; }
-
-        /* Special Items */
-        .water-container { width: 80px; height: 100px; border: 5px solid #0EA5E9; border-top: none; border-radius: 0 0 20px 20px; overflow: hidden; position: relative; margin: 10px 0; }
-        .water-fill { position: absolute; bottom: 0; width: 100%; height: 0%; background: #38BDF8; transition: 0.5s ease; }
-        .thirsty { animation: shake 0.5s infinite; border-color: var(--danger); }
-
-        .mood-box { display: flex; gap: 10px; width: 100%; justify-content: space-around; }
-        .mood-item { font-size: 35px; background: #F1F5F9; padding: 10px; border-radius: 15px; border: 2px solid transparent; flex: 1; }
-        .mood-item.active { background: #DBEAFE; border-color: var(--primary); }
-
-        /* SOS Bar */
-        .footer-sos { position: fixed; bottom: 0; left: 0; width: 100%; padding: 15px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); border-top: 2px solid #E2E8F0; }
-        .btn-sos { width: 100%; background: linear-gradient(135deg, #EF4444, #991B1B); color: white; border: none; padding: 25px; border-radius: 25px; font-size: 36px; font-weight: 900; box-shadow: 0 10px 0 #7F1D1D; }
+        /* SOS ด้านล่าง */
+        .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; padding: 20px; background: white; border-top: 5px solid #E2E8F0; z-index: 100; }
+        .btn-sos { width: 100%; font-size: 45px; font-weight: 900; padding: 30px; border-radius: 40px; border: none; background: var(--danger); color: white; box-shadow: 0 15px 0 #991B1B; }
 
         /* Overlays */
-        .overlay { display: none; position: fixed; inset: 0; z-index: 9999; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: rgba(15, 23, 42, 0.98); color: white; }
-        
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-        @keyframes shake { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(5deg); } 75% { transform: rotate(-5deg); } }
+        .overlay { display: none; position: fixed; inset: 0; z-index: 999; background: rgba(0,0,0,0.9); flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; padding: 20px; }
+        .alert-box { background: #F59E0B; padding: 50px; border-radius: 40px; width: 100%; max-width: 600px; }
+        .alert-text { font-size: 50px; font-weight: 900; margin: 30px 0; line-height: 1.2; }
+        .btn-close { font-size: 40px; padding: 20px 60px; border-radius: 30px; border: none; font-weight: 900; background: white; color: black; }
     </style>
 </head>
 <body>
 
-    <div id="start-overlay">
-        <i class="fa-solid fa-hand-pointer fa-bounce" style="font-size: 100px;"></i>
-        <button class="btn-start shadow-sm" onclick="initSystem()">แตะเพื่อเริ่มใช้งาน</button>
-        <p style="margin-top: 20px; font-size: 20px;">ระบบดูแลผู้สูงอายุพร้อมทำงาน</p>
+    <div id="alert-overlay" class="overlay">
+        <div class="alert-box">
+            <i class="fa-solid fa-bullhorn fa-beat" style="font-size: 100px;"></i>
+            <div class="alert-text" id="alert-msg">ข้อความ...</div>
+            <button class="btn-close" onclick="closeAlert()">รับทราบ</button>
+        </div>
+    </div>
+
+    <div id="video-overlay" class="overlay" style="padding:0; background: black;">
+        <div id="jitsi-container" style="width: 100%; height: 100%;"></div>
     </div>
 
     <div class="header">
-        <button class="btn-morning btn-active" id="btn-morning" onclick="morningCheckin()">
-            <i class="fa-solid fa-sun"></i> ตื่นนอนแล้ว
+        <div class="clock" id="clock">00:00</div>
+        <div style="font-size: 24px; color: #64748B; font-weight: 600;">แตะหน้าจอ 1 ครั้งเพื่อเปิดระบบเสียง</div>
+    </div>
+
+    <div class="info-box">
+        <div class="info-title"><i class="fa-solid fa-pills"></i> ยาที่ต้องกินวันนี้</div>
+        <div class="info-text" id="disp-pill">ยังไม่มีข้อมูลยา</div>
+    </div>
+
+    <div class="info-box blue">
+        <div class="info-title"><i class="fa-regular fa-calendar-check"></i> นัดหมอครั้งถัดไป</div>
+        <div class="info-text" id="disp-appoint">ยังไม่มีวันนัด</div>
+    </div>
+
+    <div class="grid">
+        <button class="btn-big btn-water" onclick="drinkWater()">
+            <i class="fa-solid fa-glass-water" style="font-size: 60px;"></i>
+            <span>ดื่มน้ำ <br><small id="water-count" style="font-size:24px;">(0 แก้ว)</small></span>
         </button>
-        <div class="clock-container">
-            <div class="clock-time" id="clock-time">00:00</div>
-        </div>
-    </div>
-
-    <button class="btn-walkie btn-active" id="btn-walkie" onmousedown="startVoice()" onmouseup="stopVoice()" ontouchstart="startVoice()" ontouchend="stopVoice()">
-        <i class="fa-solid fa-microphone"></i> กดค้างเพื่อพูด
-    </button>
-
-    <div class="grid-main">
-        <div class="card btn-active" onclick="drinkWater()">
-            <div class="card-title" style="color:#0284C7">ดื่มน้ำ</div>
-            <div class="water-container" id="water-glass"><div class="water-fill" id="water-fill"></div></div>
-            <div id="water-text" style="font-weight:900">0 แก้ว</div>
-        </div>
-
-        <div class="card" style="background:#FFF7ED">
-            <div class="card-title" style="color:#C2410C">ทานยา</div>
-            <div id="pill-info" style="font-size:16px; margin-bottom:10px; font-weight:600">รอข้อมูล...</div>
-            <button class="btn-active" onclick="takePill(this)" style="background:#EA580C; color:white; border:none; padding:10px 20px; border-radius:15px; font-weight:800; width:100%">ทานแล้ว</button>
-        </div>
-
-        <div class="card card-full">
-            <div class="card-title">ความรู้สึกวันนี้</div>
-            <div class="mood-box">
-                <div class="mood-item btn-active" onclick="setMood(this, '😁 สบายดี')">😁</div>
-                <div class="mood-item btn-active" onclick="setMood(this, '🤒 ปวดเมื่อย')">🤒</div>
-                <div class="mood-item btn-active" onclick="setMood(this, '😢 เหงา')">😢</div>
-                <div class="mood-item btn-active" onclick="setMood(this, '😴 ง่วง')">😴</div>
-            </div>
-        </div>
-
-        <div class="card" style="background: #F0F9FF" onclick="openRadio()">
-            <div class="card-title" style="color:#0369A1"><i class="fa-solid fa-radio"></i> ฟังธรรมะ</div>
-        </div>
-
-        <div class="card" style="background: #FDF2F8" onclick="openGame()">
-            <div class="card-title" style="color:#BE185D"><i class="fa-solid fa-brain"></i> ฝึกสมอง</div>
-        </div>
-    </div>
-
-    <div class="footer-sos">
-        <button class="btn-sos btn-active" onclick="triggerSOS()">
-            <i class="fa-solid fa-triangle-exclamation"></i> แจ้งเหตุฉุกเฉิน!
+        <button class="btn-big btn-pill" onclick="takePill()">
+            <i class="fa-solid fa-check-double" style="font-size: 60px;"></i>
+            <span>กินยาแล้ว</span>
         </button>
     </div>
 
-    <div id="sos-overlay" class="overlay" style="background:var(--danger)">
-        <h1 style="font-size: 40px;">กำลังแจ้งเหตุฉุกเฉิน!</h1>
-        <div style="font-size: 150px; font-weight: 900;" id="sos-timer">5</div>
-        <button onclick="cancelSOS()" style="background:white; color:var(--danger); border:none; padding:20px 50px; border-radius:30px; font-size:32px; font-weight:900">ยกเลิก</button>
-    </div>
-
-    <div id="video-overlay" class="overlay">
-        <div id="jitsi-container" style="width:100%; height:80%;"></div>
-        <button onclick="closeVideo()" style="background:var(--danger); color:white; border:none; padding:15px 40px; border-radius:20px; margin-top:10px;">วางสาย</button>
+    <div class="bottom-bar">
+        <button class="btn-sos" onclick="triggerSOS()"><i class="fa-solid fa-triangle-exclamation"></i> แจ้งเหตุฉุกเฉินด่วน</button>
     </div>
 
     <script>
-        // --- Config ---
-        const GAS_URL = "YOUR_GAS_URL_HERE"; // แก้ตรงนี้ด้วย
-        const UNIQUE_ID = "ELDER_001_" + Math.random().toString(36).substr(2, 5);
-        const TOPIC_PREFIX = "familycare/" + UNIQUE_ID;
-        const mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
-
+        // ตั้งค่า MQTT (เปลี่ยน System ID ให้ตรงกัน)
+        const SYSTEM_ID = "FAMILY_001"; 
+        const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
         let waterCount = 0;
-        let sosInterval = null;
-        let recognition = null;
+        let jitsiApi = null;
 
-        // --- Init ---
-        function initSystem() {
-            document.getElementById('start-overlay').style.display = 'none';
-            speak("ระบบพร้อมดูแลคุณตาแล้วครับ");
-            initClock();
-            initSpeech();
-            fetchData();
-            
-            // Sub MQTT
-            mqttClient.subscribe(TOPIC_PREFIX + "/command/#");
-            mqttClient.on('message', handleMqttMessage);
-        }
+        // เริ่มต้นระบบ
+        setInterval(() => {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
+        }, 1000);
+
+        // แตะหน้าจอเพื่ออนุญาตเสียง
+        document.body.addEventListener('click', () => {
+            if(window.speechSynthesis) window.speechSynthesis.getVoices();
+        }, {once:true});
 
         function speak(txt) {
             const msg = new SpeechSynthesisUtterance(txt);
-            msg.lang = 'th-TH';
+            msg.lang = 'th-TH'; msg.rate = 0.9;
             window.speechSynthesis.speak(msg);
         }
 
-        function initClock() {
+        // --- MQTT รับคำสั่งจากลูกหลาน ---
+        client.on('connect', () => {
+            client.subscribe(`familycare/${SYSTEM_ID}/command/#`);
+            // ส่งสถานะออนไลน์ทุก 5 วิ
             setInterval(() => {
-                document.getElementById('clock-time').innerText = new Date().toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'});
-            }, 1000);
-        }
+                client.publish(`familycare/${SYSTEM_ID}/status/heartbeat`, 'online');
+            }, 5000);
+        });
 
-        // --- Features ---
+        client.on('message', (topic, message) => {
+            const payload = message.toString();
+            const action = topic.split('/').pop(); // อ่านค่าหลัง / สุดท้าย
+
+            // 1. อัปเดตตารางยา
+            if(action === 'pill') {
+                document.getElementById('disp-pill').innerText = payload;
+                speak("ลูกหลานอัปเดตตารางยาว่า " + payload);
+            }
+            // 2. อัปเดตนัดหมาย
+            else if(action === 'appoint') {
+                document.getElementById('disp-appoint').innerText = payload;
+                speak("ลูกหลานอัปเดตนัดหมายว่า " + payload);
+            }
+            // 3. ข้อความเสียง/ประกาศ
+            else if(action === 'alert') {
+                document.getElementById('alert-msg').innerText = payload;
+                document.getElementById('alert-overlay').style.display = 'flex';
+                speak("ข้อความจากลูกหลาน: " + payload);
+            }
+            // 4. วีดีโอคอล
+            else if(action === 'video') {
+                if(payload === 'start') {
+                    document.getElementById('video-overlay').style.display = 'flex';
+                    speak("กำลังเชื่อมต่อวีดีโอคอลครับ");
+                    jitsiApi = new JitsiMeetExternalAPI("meet.jit.si", {
+                        roomName: "Room_" + SYSTEM_ID,
+                        parentNode: document.getElementById('jitsi-container'),
+                        width: "100%", height: "100%"
+                    });
+                } else if(payload === 'stop') {
+                    if(jitsiApi) jitsiApi.dispose();
+                    document.getElementById('video-overlay').style.display = 'none';
+                    speak("วางสายแล้วครับ");
+                }
+            }
+        });
+
+        // --- ปุ่มกดฝั่งคนแก่ ---
         function drinkWater() {
             waterCount++;
-            document.getElementById('water-text').innerText = waterCount + " แก้ว";
-            document.getElementById('water-fill').style.height = (waterCount * 12.5) + "%";
-            speak("ดื่มน้ำเก่งมากครับ");
-            logAction("drink_water", waterCount);
+            document.getElementById('water-count').innerText = `(${waterCount} แก้ว)`;
+            speak(`ดื่มน้ำแก้วที่ ${waterCount} แล้วครับ`);
+            client.publish(`familycare/${SYSTEM_ID}/status/water`, waterCount.toString());
         }
 
-        function setMood(el, val) {
-            document.querySelectorAll('.mood-item').forEach(i => i.classList.remove('active'));
-            el.classList.add('active');
-            speak("บอกลูกหลานว่าคุณตา " + val);
-            logAction("mood", val);
+        function takePill() {
+            speak("บันทึกว่ากินยาเรียบร้อยแล้วครับ");
+            client.publish(`familycare/${SYSTEM_ID}/status/pill_taken`, 'yes');
+        }
+
+        function closeAlert() {
+            document.getElementById('alert-overlay').style.display = 'none';
         }
 
         function triggerSOS() {
-            let count = 5;
-            const overlay = document.getElementById('sos-overlay');
-            const timerEl = document.getElementById('sos-timer');
-            overlay.style.display = 'flex';
-            timerEl.innerText = count;
-            
-            speak("จะแจ้งเหตุใน 5 วินาที");
-            sosInterval = setInterval(() => {
-                count--;
-                timerEl.innerText = count;
-                if(count <= 0) {
-                    clearInterval(sosInterval);
-                    executeSOS();
-                }
-            }, 1000);
-        }
-
-        function cancelSOS() {
-            clearInterval(sosInterval);
-            document.getElementById('sos-overlay').style.display = 'none';
-            speak("ยกเลิกการแจ้งเหตุแล้วครับ");
-        }
-
-        async function executeSOS() {
-            document.getElementById('sos-overlay').style.display = 'none';
-            speak("ส่งสัญญาณขอความช่วยเหลือแล้ว");
-            // พยายามดึง GPS
-            navigator.geolocation.getCurrentPosition(pos => {
-                logAction("sos", `Lat: ${pos.coords.latitude}, Lng: ${pos.coords.longitude}`);
-            }, () => {
-                logAction("sos", "No GPS");
-            });
-        }
-
-        // --- Communications ---
-        function initSpeech() {
-            const SpeechSDK = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (SpeechSDK) {
-                recognition = new SpeechSDK();
-                recognition.lang = 'th-TH';
-                recognition.onresult = (e) => {
-                    const text = e.results[0][0].transcript;
-                    logAction("voice_msg", text);
-                    speak("ส่งข้อความแล้ว");
-                };
-            }
-        }
-
-        function startVoice() {
-            if(recognition) {
-                document.getElementById('btn-walkie').classList.add('recording');
-                recognition.start();
-            }
-        }
-
-        function stopVoice() {
-            document.getElementById('btn-walkie').classList.remove('recording');
-            setTimeout(() => recognition.stop(), 500);
-        }
-
-        // --- Data Handling ---
-        async function logAction(act, detail) {
-            console.log(`Log: ${act} - ${detail}`);
-            mqttClient.publish(`${TOPIC_PREFIX}/status`, JSON.stringify({action: act, detail: detail}));
-            // Fetch GAS (Optional)
-            try {
-                fetch(GAS_URL, { method: 'POST', body: JSON.stringify({action: act, detail: detail}) });
-            } catch(e) {}
-        }
-
-        function handleMqttMessage(topic, msg) {
-            const cmd = topic.split('/').pop();
-            const data = msg.toString();
-            if(cmd === 'video' && data === 'start') {
-                openVideo();
-            } else if(cmd === 'alert') {
-                speak("ประกาศจากลูกหลาน: " + data);
-                alert(data);
-            }
-        }
-
-        let jitsiApi = null;
-        function openVideo() {
-            document.getElementById('video-overlay').style.display = 'flex';
-            jitsiApi = new JitsiMeetExternalAPI("meet.jit.si", {
-                roomName: "ElderlyCare_" + UNIQUE_ID,
-                parentNode: document.getElementById('jitsi-container'),
-                width: "100%", height: "100%"
-            });
-        }
-
-        function closeVideo() {
-            if(jitsiApi) jitsiApi.dispose();
-            document.getElementById('video-overlay').style.display = 'none';
-        }
-
-        function fetchData() {
-            // จำลองการโหลดข้อมูลยา
-            setTimeout(() => {
-                document.getElementById('pill-info').innerText = "ยาลดความดัน (หลังอาหารเช้า)";
-            }, 2000);
+            speak("กำลังส่งสัญญาณขอความช่วยเหลือ");
+            client.publish(`familycare/${SYSTEM_ID}/status/sos`, 'EMERGENCY');
+            alert("ส่งสัญญาณฉุกเฉินแล้ว! กรุณารอสักครู่");
         }
     </script>
 </body>
