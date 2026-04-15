@@ -3,49 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ศูนย์บัญชาการ (Smart Display Edition)</title>
+    <title>ศูนย์บัญชาการ (Multi-Pill Manager)</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <script src="https://meet.jit.si/external_api.js"></script>
     <style>
-        :root { --bg: #0F172A; --card: #1E293B; --primary: #3B82F6; --success: #10B981; --text: #F8FAFC; --danger: #EF4444; }
+        :root { --bg: #0F172A; --card: #1E293B; --primary: #3B82F6; --success: #10B981; --text: #F8FAFC; --danger: #EF4444; --warning: #FBBF24;}
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Prompt', sans-serif; }
         body { background: var(--bg); color: var(--text); padding: 20px; }
 
         .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-        .card { background: var(--card); border-radius: 20px; padding: 30px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .card { background: var(--card); border-radius: 20px; padding: 30px; border: 1px solid rgba(255,255,255,0.1); }
         .card-title { font-size: 24px; font-weight: 700; margin-bottom: 25px; border-bottom: 2px solid rgba(255,255,255,0.1); padding-bottom: 10px; display: flex; justify-content: space-between;}
 
-        .status-badge { background: rgba(0,0,0,0.3); padding: 10px 20px; border-radius: 30px; font-weight: bold; }
-        .online { color: var(--success); text-shadow: 0 0 10px var(--success); }
-        .offline { color: var(--danger); }
+        .status-badge { background: rgba(0,0,0,0.3); padding: 8px 15px; border-radius: 30px; font-size: 16px; }
+        .online { color: var(--success); } .offline { color: var(--danger); }
 
-        .stat-box { background: rgba(0,0,0,0.2); padding: 20px; border-radius: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; font-size: 20px; border: 1px solid rgba(255,255,255,0.05);}
-        .stat-value { font-size: 28px; font-weight: bold; color: var(--primary); }
+        .stat-box { background: rgba(0,0,0,0.2); padding: 20px; border-radius: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; font-size: 18px; border: 1px solid rgba(255,255,255,0.05);}
+        .stat-value { font-size: 24px; font-weight: bold; color: var(--primary); }
 
-        #sos-alert { display: none; background: linear-gradient(90deg, #7F1D1D, #EF4444); color: white; padding: 25px; border-radius: 20px; margin-bottom: 30px; justify-content: space-between; align-items: center; animation: pulse 1.5s infinite; }
-        
         .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; color: #94A3B8; font-size: 16px;}
-        input[type="text"] { width: 100%; padding: 15px; border-radius: 10px; border: 1px solid #475569; background: #0F172A; color: white; font-size: 16px; outline: none;}
+        input[type="text"] { width: 100%; padding: 15px; border-radius: 10px; border: 1px solid #475569; background: #0F172A; color: white; font-size: 16px; outline: none; margin-bottom: 10px;}
         input[type="text"]:focus { border-color: var(--primary); }
 
-        .btn { padding: 15px 25px; border-radius: 10px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; color: white; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 10px;}
+        .btn { padding: 12px 20px; border-radius: 10px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; color: white; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s;}
         .btn:active { transform: translateY(2px); }
-        .btn-send { background: var(--primary); width: 100%; margin-top: 5px;}
-        .btn-video { background: #8B5CF6; width: 100%; margin-bottom: 10px;}
-
+        
+        /* ระบบยา */
+        .pill-manager { background: rgba(0,0,0,0.2); padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+        .pill-item { display: flex; justify-content: space-between; background: #334155; padding: 10px 15px; border-radius: 10px; margin-bottom: 10px; align-items: center; }
+        
+        #sos-alert { display: none; background: var(--danger); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; justify-content: space-between; align-items: center; }
         #video-modal { display: none; position: fixed; inset: 0; background: black; z-index: 1000; flex-direction: column; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
     </style>
 </head>
 <body>
 
     <div id="video-modal">
-        <div style="padding: 20px; background: #111; display: flex; justify-content: space-between; align-items: center;">
-            <h2 style="color: white;"><i class="fa-solid fa-video"></i> วีดีโอคอลกับคุณตา</h2>
-            <button class="btn" style="background: var(--danger); width: auto;" onclick="stopVideoCall()">ตัดสาย</button>
+        <div style="padding: 20px; background: #111; display: flex; justify-content: space-between;">
+            <h2 style="color: white;"><i class="fa-solid fa-video"></i> วีดีโอคอล</h2>
+            <button class="btn" style="background: var(--danger);" onclick="stopVideoCall()">ตัดสาย</button>
         </div>
         <div id="jitsi-container" style="flex: 1;"></div>
     </div>
@@ -53,53 +51,45 @@
     <div class="container">
         
         <div id="sos-alert" style="grid-column: span 2;">
-            <div>
-                <h2 style="font-size: 28px; font-weight: 900;"><i class="fa-solid fa-triangle-exclamation"></i> สัญญาณฉุกเฉินด่วนจากคุณตา!</h2>
-                <p>โปรดเปิดกล้องเช็คสถานการณ์ทันที</p>
-            </div>
-            <button class="btn" style="background: white; color: var(--danger); width: auto; font-size: 20px;" onclick="document.getElementById('sos-alert').style.display='none'">รับทราบแล้ว</button>
+            <h2><i class="fa-solid fa-triangle-exclamation"></i> สัญญาณฉุกเฉินด่วนจากคุณตา!</h2>
+            <button class="btn" style="background: white; color: var(--danger);" onclick="document.getElementById('sos-alert').style.display='none'">รับทราบ</button>
         </div>
 
         <div class="card">
             <div class="card-title">
-                <span><i class="fa-solid fa-microchip"></i> Dashboard สถานะ</span>
+                <span><i class="fa-solid fa-microchip"></i> สถานะหน้าจอ</span>
                 <span class="status-badge offline" id="online-status">ออฟไลน์ 🔴</span>
             </div>
+            <div class="stat-box"><span><i class="fa-solid fa-glass-water"></i> ดื่มน้ำ</span><span class="stat-value" id="stat-water">0 แก้ว</span></div>
+            <div class="stat-box"><span><i class="fa-solid fa-bell"></i> ข้อความล่าสุด</span><span class="stat-value" id="stat-read" style="color:var(--success); font-size:16px;">รอรับทราบ</span></div>
             
-            <div class="stat-box"><span><i class="fa-solid fa-glass-water"></i> ดื่มน้ำวันนี้</span><span class="stat-value" id="stat-water">0 แก้ว</span></div>
-            <div class="stat-box"><span><i class="fa-solid fa-check-double"></i> การกินยา</span><span class="stat-value" id="stat-pill" style="color:#F59E0B">รอข้อมูล</span></div>
-
-            <div style="margin-top: 40px;">
-                <label style="color: var(--danger);"><i class="fa-solid fa-video"></i> ระบบบังคับกล้อง (ฉุกเฉิน)</label>
-                <button class="btn btn-video" onclick="startVideoCall()">เปิดกล้องคุณตาทันที</button>
+            <div style="margin-top: 30px;">
+                <button class="btn" style="background: #8B5CF6; width: 100%; height: 60px; font-size: 20px;" onclick="startVideoCall()"><i class="fa-solid fa-video"></i> เปิดกล้องฉุกเฉิน</button>
             </div>
         </div>
 
         <div class="card">
-            <div class="card-title"><span><i class="fa-solid fa-paper-plane"></i> ควบคุมจอระยะไกล</span></div>
-
-            <div class="form-group">
-                <label>🗣️ เสียงประกาศ (ไม่เซฟลงความจำ)</label>
-                <input type="text" id="input-alert" placeholder="เช่น ได้เวลากินข้าวแล้วครับ...">
-                <button class="btn btn-send" onclick="sendData('alert', false)"><i class="fa-solid fa-volume-high"></i> พูดออกหน้าจอ</button>
-            </div>
-
-            <div class="form-group">
-                <label>💊 อัปเดตตารางยา (บันทึกถาวร)</label>
-                <input type="text" id="input-pill" placeholder="เช่น ยาความดัน 1 เม็ดเช้า">
-                <button class="btn btn-send" style="background: var(--success);" onclick="sendData('pill', true)"><i class="fa-solid fa-pills"></i> ส่งตารางยา</button>
-            </div>
+            <div class="card-title"><span><i class="fa-solid fa-pills"></i> ระบบจัดการยา (ส่งเข้าจอคุณตา)</span></div>
             
-            <div class="form-group">
-                <label>📅 อัปเดตวันนัดหมาย (บันทึกถาวร)</label>
-                <input type="text" id="input-appoint" placeholder="เช่น วันศุกร์ที่ 20 รพ.ชลบุรี">
-                <button class="btn btn-send" style="background: var(--warning);" onclick="sendData('appoint', true)"><i class="fa-regular fa-calendar-check"></i> ส่งวันนัดหมาย</button>
+            <div class="pill-manager">
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <input type="text" id="new-pill" placeholder="ชื่อยา + เวลา (เช่น ยาเบาหวาน ก่อนอาหารเช้า)" style="margin:0;">
+                    <button class="btn" style="background: var(--primary);" onclick="addPill()">เพิ่ม</button>
+                </div>
+                <div id="admin-pill-list">
+                    </div>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button class="btn" style="background: var(--success); flex: 1;" onclick="syncPillsToDevice()"><i class="fa-solid fa-cloud-arrow-up"></i> ส่งตารางยาให้คุณตา</button>
+                    <button class="btn" style="background: #475569;" onclick="resetPillStatus()"><i class="fa-solid fa-rotate-right"></i> รีเซ็ตสถานะการกินยา</button>
+                </div>
             </div>
 
+            <hr style="border: 1px solid rgba(255,255,255,0.05); margin: 30px 0;">
+
             <div class="form-group">
-                <label>🖼️ เพิ่มรูปลงสไลด์โชว์ (บันทึกถาวร)</label>
-                <input type="text" id="input-photo" placeholder="เช่น https://link-to-your-image.jpg">
-                <button class="btn btn-send" style="background: #D946EF;" onclick="sendData('photo', true)"><i class="fa-solid fa-image"></i> อัปโหลดรูปลงจอคุณตา</button>
+                <label>🗣️ เสียงประกาศฉุกเฉิน</label>
+                <input type="text" id="input-alert" placeholder="เช่น ได้เวลากินข้าวแล้วครับ...">
+                <button class="btn" style="background: var(--warning); color: black; width: 100%;" onclick="sendData('alert', false)"><i class="fa-solid fa-volume-high"></i> พูดออกหน้าจอ</button>
             </div>
         </div>
     </div>
@@ -108,6 +98,10 @@
         const SYSTEM_ID = "FAMILY_001_VIP"; 
         const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
         let onlineTimer, jitsiApi;
+        
+        // โหลดรายการยาของฝั่งแอดมิน
+        let adminPills = JSON.parse(localStorage.getItem('adminPills') || '[]');
+        renderAdminPills();
 
         client.on('connect', () => client.subscribe(`familycare/${SYSTEM_ID}/status/#`));
 
@@ -116,28 +110,75 @@
             const type = topic.split('/').pop();
 
             if(type === 'heartbeat') {
-                const badge = document.getElementById('online-status');
-                badge.innerText = "ออนไลน์ 🟢"; badge.className = "status-badge online";
-                
+                document.getElementById('online-status').innerText = "ออนไลน์ 🟢"; 
+                document.getElementById('online-status').className = "status-badge online";
                 clearTimeout(onlineTimer);
-                onlineTimer = setTimeout(() => { badge.innerText = "ออฟไลน์ 🔴"; badge.className = "status-badge offline"; }, 7000);
+                onlineTimer = setTimeout(() => { 
+                    document.getElementById('online-status').innerText = "ออฟไลน์ 🔴"; 
+                    document.getElementById('online-status').className = "status-badge offline"; 
+                }, 7000);
             }
             else if(type === 'water') document.getElementById('stat-water').innerText = payload + " แก้ว";
-            else if(type === 'pill_taken') { document.getElementById('stat-pill').innerText = "กินเรียบร้อย ✔️"; document.getElementById('stat-pill').style.color = "var(--success)"; }
-            else if(type === 'read_receipt') alert("✅ แจ้งเตือน: " + payload);
+            else if(type === 'read_receipt') document.getElementById('stat-read').innerText = "อ่านแล้ว ✔️";
+            else if(type === 'pill_taken') {
+                alert(`✅ อัปเดต: คุณตากิน ${payload} เรียบร้อยแล้ว!`);
+                // อัปเดตในระบบแอดมินด้วย
+                adminPills.forEach(p => { if(p.name === payload) p.taken = true; });
+                localStorage.setItem('adminPills', JSON.stringify(adminPills));
+                renderAdminPills();
+            }
             else if(type === 'sos') {
                 document.getElementById('sos-alert').style.display = 'flex';
                 new Audio('https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg').play(); 
             }
         });
 
-        // 🌟 เพิ่ม { retain: isRetain } เพื่อให้ MQTT ช่วยจำ 🌟
+        // --- ระบบจัดการยา ---
+        function renderAdminPills() {
+            const list = document.getElementById('admin-pill-list');
+            if(adminPills.length === 0) { list.innerHTML = '<span style="color:var(--sub)">ยังไม่มียาในระบบ</span>'; return; }
+            list.innerHTML = adminPills.map((p, i) => `
+                <div class="pill-item">
+                    <span style="color: ${p.taken ? 'var(--success)' : 'white'}">${p.taken ? '✔️' : '⏳'} ${p.name}</span>
+                    <button class="btn" style="background:var(--danger); padding: 5px 10px;" onclick="removePill(${i})"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function addPill() {
+            const el = document.getElementById('new-pill');
+            if(!el.value) return;
+            adminPills.push({ name: el.value, taken: false });
+            localStorage.setItem('adminPills', JSON.stringify(adminPills));
+            el.value = ""; renderAdminPills();
+        }
+
+        function removePill(index) {
+            adminPills.splice(index, 1);
+            localStorage.setItem('adminPills', JSON.stringify(adminPills));
+            renderAdminPills();
+        }
+
+        function resetPillStatus() {
+            adminPills.forEach(p => p.taken = false);
+            localStorage.setItem('adminPills', JSON.stringify(adminPills));
+            renderAdminPills();
+            syncPillsToDevice(); // ส่งไปลบขีดฆ่าที่จอคุณตาด้วย
+            alert("รีเซ็ตสถานะการกินยาเริ่มวันใหม่แล้ว!");
+        }
+
+        function syncPillsToDevice() {
+            client.publish(`familycare/${SYSTEM_ID}/command/pills_update`, JSON.stringify(adminPills), { retain: true });
+            alert("ส่งตารางยาเข้าหน้าจอคุณตาสำเร็จ!");
+        }
+
+        // --- ระบบอื่นๆ ---
         function sendData(type, isRetain) {
             const el = document.getElementById(`input-${type}`);
             if(!el.value) return;
             client.publish(`familycare/${SYSTEM_ID}/command/${type}`, el.value, { retain: isRetain });
-            el.value = ""; 
-            alert("ส่งข้อมูลเข้าหน้าจอคุณตาเรียบร้อย!");
+            el.value = ""; document.getElementById('stat-read').innerText = "รอรับทราบ...";
+            alert("ส่งประกาศสำเร็จ!");
         }
 
         function startVideoCall() {
@@ -148,8 +189,7 @@
 
         function stopVideoCall() {
             client.publish(`familycare/${SYSTEM_ID}/command/video`, "stop");
-            if(jitsiApi) jitsiApi.dispose();
-            document.getElementById('video-modal').style.display = 'none';
+            if(jitsiApi) jitsiApi.dispose(); document.getElementById('video-modal').style.display = 'none';
         }
     </script>
 </body>
