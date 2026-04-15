@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ศูนย์บัญชาการ (Ultimate Clean)</title>
+    <title>ศูนย์บัญชาการ (Smart Display Edition)</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
@@ -17,7 +17,6 @@
         .card { background: var(--card); border-radius: 20px; padding: 30px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .card-title { font-size: 24px; font-weight: 700; margin-bottom: 25px; border-bottom: 2px solid rgba(255,255,255,0.1); padding-bottom: 10px; display: flex; justify-content: space-between;}
 
-        /* สถานะ */
         .status-badge { background: rgba(0,0,0,0.3); padding: 10px 20px; border-radius: 30px; font-weight: bold; }
         .online { color: var(--success); text-shadow: 0 0 10px var(--success); }
         .offline { color: var(--danger); }
@@ -25,10 +24,8 @@
         .stat-box { background: rgba(0,0,0,0.2); padding: 20px; border-radius: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; font-size: 20px; border: 1px solid rgba(255,255,255,0.05);}
         .stat-value { font-size: 28px; font-weight: bold; color: var(--primary); }
 
-        /* SOS Alert */
         #sos-alert { display: none; background: linear-gradient(90deg, #7F1D1D, #EF4444); color: white; padding: 25px; border-radius: 20px; margin-bottom: 30px; justify-content: space-between; align-items: center; animation: pulse 1.5s infinite; }
         
-        /* ฟอร์มและปุ่ม */
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; color: #94A3B8; font-size: 16px;}
         input[type="text"] { width: 100%; padding: 15px; border-radius: 10px; border: 1px solid #475569; background: #0F172A; color: white; font-size: 16px; outline: none;}
@@ -82,32 +79,36 @@
             <div class="card-title"><span><i class="fa-solid fa-paper-plane"></i> ควบคุมจอระยะไกล</span></div>
 
             <div class="form-group">
-                <label>🗣️ เสียงประกาศฉุกเฉิน (เด้งขึ้นหน้าจอคุณตา)</label>
+                <label>🗣️ เสียงประกาศ (ไม่เซฟลงความจำ)</label>
                 <input type="text" id="input-alert" placeholder="เช่น ได้เวลากินข้าวแล้วครับ...">
-                <button class="btn btn-send" onclick="sendData('alert')"><i class="fa-solid fa-volume-high"></i> พูดออกหน้าจอ</button>
+                <button class="btn btn-send" onclick="sendData('alert', false)"><i class="fa-solid fa-volume-high"></i> พูดออกหน้าจอ</button>
             </div>
 
             <div class="form-group">
-                <label>💊 อัปเดตตารางยา</label>
+                <label>💊 อัปเดตตารางยา (บันทึกถาวร)</label>
                 <input type="text" id="input-pill" placeholder="เช่น ยาความดัน 1 เม็ดเช้า">
-                <button class="btn btn-send" style="background: var(--success);" onclick="sendData('pill')"><i class="fa-solid fa-pills"></i> ส่งตารางยา</button>
+                <button class="btn btn-send" style="background: var(--success);" onclick="sendData('pill', true)"><i class="fa-solid fa-pills"></i> ส่งตารางยา</button>
+            </div>
+            
+            <div class="form-group">
+                <label>📅 อัปเดตวันนัดหมาย (บันทึกถาวร)</label>
+                <input type="text" id="input-appoint" placeholder="เช่น วันศุกร์ที่ 20 รพ.ชลบุรี">
+                <button class="btn btn-send" style="background: var(--warning);" onclick="sendData('appoint', true)"><i class="fa-regular fa-calendar-check"></i> ส่งวันนัดหมาย</button>
             </div>
 
             <div class="form-group">
-                <label>🖼️ เพิ่มรูปลงกรอบรูปสไลด์โชว์ (วางลิงก์รูปภาพ)</label>
+                <label>🖼️ เพิ่มรูปลงสไลด์โชว์ (บันทึกถาวร)</label>
                 <input type="text" id="input-photo" placeholder="เช่น https://link-to-your-image.jpg">
-                <button class="btn btn-send" style="background: #D946EF;" onclick="sendData('photo')"><i class="fa-solid fa-image"></i> อัปโหลดรูปลงจอคุณตา</button>
+                <button class="btn btn-send" style="background: #D946EF;" onclick="sendData('photo', true)"><i class="fa-solid fa-image"></i> อัปโหลดรูปลงจอคุณตา</button>
             </div>
         </div>
     </div>
 
     <script>
-        // รหัสเครื่อง (ต้องตรงกับฝั่งคนแก่เป๊ะๆ)
         const SYSTEM_ID = "FAMILY_001_VIP"; 
         const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
         let onlineTimer, jitsiApi;
 
-        // รับข้อมูลจากคุณตา
         client.on('connect', () => client.subscribe(`familycare/${SYSTEM_ID}/status/#`));
 
         client.on('message', (topic, message) => {
@@ -123,22 +124,22 @@
             }
             else if(type === 'water') document.getElementById('stat-water').innerText = payload + " แก้ว";
             else if(type === 'pill_taken') { document.getElementById('stat-pill').innerText = "กินเรียบร้อย ✔️"; document.getElementById('stat-pill').style.color = "var(--success)"; }
+            else if(type === 'read_receipt') alert("✅ แจ้งเตือน: " + payload);
             else if(type === 'sos') {
                 document.getElementById('sos-alert').style.display = 'flex';
-                new Audio('https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg').play(); // เสียงไซเรน
+                new Audio('https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg').play(); 
             }
         });
 
-        // ส่งคำสั่งไปที่คุณตา
-        function sendData(type) {
+        // 🌟 เพิ่ม { retain: isRetain } เพื่อให้ MQTT ช่วยจำ 🌟
+        function sendData(type, isRetain) {
             const el = document.getElementById(`input-${type}`);
             if(!el.value) return;
-            client.publish(`familycare/${SYSTEM_ID}/command/${type}`, el.value);
+            client.publish(`familycare/${SYSTEM_ID}/command/${type}`, el.value, { retain: isRetain });
             el.value = ""; 
-            alert("ส่งคำสั่งเข้าหน้าจอคุณตาเรียบร้อย!");
+            alert("ส่งข้อมูลเข้าหน้าจอคุณตาเรียบร้อย!");
         }
 
-        // ระบบวีดีโอคอล
         function startVideoCall() {
             client.publish(`familycare/${SYSTEM_ID}/command/video`, "start");
             document.getElementById('video-modal').style.display = 'flex';
