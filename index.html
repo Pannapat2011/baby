@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ศูนย์บัญชาการ (Fixed Bug)</title>
+    <title>ศูนย์บัญชาการ (Ultimate UI + Cloud)</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
@@ -16,89 +16,91 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Prompt', sans-serif; }
         body { background: var(--bg); color: var(--text); padding: 20px; overflow-x: hidden; }
 
-        .auth-container { max-width: 500px; margin: 30px auto; background: var(--card); padding: 30px; border-radius: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
-        #reader { width: 100%; border-radius: 15px; overflow: hidden; margin-top: 15px; display: none; }
+        /* Auth Container */
+        .auth-container { max-width: 550px; margin: 40px auto; background: var(--card); padding: 40px; border-radius: 25px; text-align: center; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 40px rgba(0,0,0,0.3);}
+        #reader { width: 100%; border-radius: 15px; overflow: hidden; margin-top: 20px; display: none; border: 3px solid var(--primary); }
         
         #main-dashboard { display: none; }
-        .container { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
         
         @media (max-width: 768px) { .container { grid-template-columns: 1fr; } .stat-grid { grid-template-columns: 1fr 1fr; } }
 
-        .card { background: var(--card); border-radius: 20px; padding: 25px; border: 1px solid rgba(255,255,255,0.1); }
-        .card-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
+        .card { background: var(--card); border-radius: 20px; padding: 30px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 20px rgba(0,0,0,0.2);}
+        .card-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 25px; border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center;}
 
-        .status-badge { background: rgba(0,0,0,0.3); padding: 5px 12px; border-radius: 30px; font-size: 0.9rem; }
+        .status-badge { background: rgba(0,0,0,0.3); padding: 8px 15px; border-radius: 30px; font-size: 1rem; }
         .online { color: var(--success); } .offline { color: var(--danger); }
 
-        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 20px;}
-        .stat-box { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 15px; display: flex; flex-direction: column; gap: 5px; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.05);}
-        .stat-value { font-size: 1.5rem; font-weight: bold; color: var(--primary); }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px;}
+        .stat-box { background: rgba(0,0,0,0.2); padding: 20px; border-radius: 15px; display: flex; flex-direction: column; gap: 8px; font-size: 1rem; border: 1px solid rgba(255,255,255,0.05);}
+        .stat-value { font-size: 1.8rem; font-weight: bold; color: var(--primary); }
 
-        .form-group { margin-bottom: 15px; text-align: left;}
-        label { display: block; margin-bottom: 8px; color: #94A3B8; font-size: 0.9rem;}
-        input[type="text"], input[type="number"], select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #475569; background: #0F172A; color: white; font-size: 1rem; outline: none; margin-bottom: 10px;}
+        .form-group { margin-bottom: 18px; text-align: left;}
+        label { display: block; margin-bottom: 8px; color: #94A3B8; font-size: 1rem; font-weight: 600;}
+        input[type="text"], input[type="number"], select { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #475569; background: #0F172A; color: white; font-size: 1rem; outline: none; margin-bottom: 10px; transition: 0.2s;}
+        input:focus { border-color: var(--primary); }
         
-        .btn { padding: 12px 15px; border-radius: 10px; border: none; font-size: 1rem; font-weight: bold; cursor: pointer; color: white; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s;}
-        .btn:active { transform: translateY(2px); }
+        .btn { padding: 15px 20px; border-radius: 12px; border: none; font-size: 1.1rem; font-weight: bold; cursor: pointer; color: white; display: inline-flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.1);}
+        .btn:active { transform: translateY(3px); box-shadow: none;}
         .btn:disabled { opacity: 0.7; cursor: not-allowed; }
         
-        .pill-manager { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05);}
-        .pill-item { display: flex; justify-content: space-between; background: #334155; padding: 10px 15px; border-radius: 10px; margin-bottom: 10px; align-items: center; font-size: 0.9rem;}
+        .pill-manager { background: rgba(0,0,0,0.2); padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05);}
+        .pill-item { display: flex; justify-content: space-between; background: #334155; padding: 12px 15px; border-radius: 10px; margin-bottom: 10px; align-items: center; font-size: 1rem;}
         
-        #sos-alert { display: none; background: var(--danger); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; justify-content: space-between; align-items: center; grid-column: 1 / -1; animation: pulse 1s infinite;}
-        #map { height: 250px; border-radius: 15px; border: 2px solid var(--danger); display: none; margin-top: 15px; }
+        #sos-alert { display: none; background: var(--danger); color: white; padding: 25px; border-radius: 15px; margin-bottom: 25px; justify-content: space-between; align-items: center; grid-column: 1 / -1; animation: pulse 1.5s infinite;}
+        #map { height: 300px; border-radius: 15px; border: 3px solid var(--danger); display: none; margin-top: 15px; }
         
         #video-modal { display: none; position: fixed; inset: 0; background: black; z-index: 1000; flex-direction: column; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.7); } 70% { box-shadow: 0 0 0 15px rgba(239,68,68,0); } 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); } }
     </style>
 </head>
 <body>
 
     <div id="login-screen" class="auth-container">
-        <i class="fa-solid fa-user-shield" style="font-size: 60px; color: var(--primary);"></i>
-        <h2 style="margin: 20px 0;">ระบบศูนย์ควบคุม</h2>
-        <p style="color: #94A3B8; margin-bottom: 20px;">สแกน QR Code จากหน้าจอผู้สูงอายุ</p>
+        <i class="fa-solid fa-user-shield" style="font-size: 70px; color: var(--primary);"></i>
+        <h2 style="margin: 25px 0;">ระบบศูนย์ควบคุม (แอดมิน)</h2>
+        <p style="color: #94A3B8; margin-bottom: 25px; font-size: 1.1rem;">สแกน QR Code จากหน้าจอผู้สูงอายุเพื่อเชื่อมต่อ</p>
         
-        <button class="btn" style="background: var(--primary); width: 100%;" onclick="startScanner()">
-            <i class="fa-solid fa-camera"></i> เปิดกล้องสแกน QR (กล้องหลัง)
+        <button class="btn" style="background: var(--primary); width: 100%; font-size: 1.2rem;" onclick="startScanner()">
+            <i class="fa-solid fa-camera"></i> เปิดกล้องสแกน QR
         </button>
         <div id="reader"></div>
 
-        <p style="margin-top: 30px; color: #94A3B8; font-size: 14px;">หรือกรอกรหัสเครื่องเอง</p>
-        <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <input type="text" id="manual-id" placeholder="ELDER_XXXXXX" style="margin:0; text-align:center;">
+        <p style="margin-top: 40px; color: #94A3B8; font-size: 15px;">หรือกรอกรหัสเครื่องด้วยตัวเอง</p>
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <input type="text" id="manual-id" placeholder="เช่น ELDER_123456" style="margin:0; text-align:center;">
             <button class="btn" style="background: var(--success);" onclick="manualPair()">เชื่อมต่อ</button>
         </div>
     </div>
 
-    <div id="setup-screen" class="auth-container" style="display: none; max-width: 600px;">
+    <div id="setup-screen" class="auth-container" style="display: none; max-width: 650px;">
         <h2 style="color: var(--success);"><i class="fa-solid fa-address-card"></i> ข้อมูลผู้สูงอายุ</h2>
-        <p style="color: #94A3B8; margin-bottom: 20px;">กรอกข้อมูลเพื่อตั้งค่าระบบให้สมบูรณ์</p>
+        <p style="color: #94A3B8; margin-bottom: 25px;">กรอกข้อมูลเพื่อตั้งค่าระบบให้สมบูรณ์</p>
         
-        <div style="display: flex; gap: 10px;">
-            <div class="form-group" style="width: 120px;">
+        <div style="display: flex; gap: 15px;">
+            <div class="form-group" style="width: 140px;">
                 <label>คำเรียก</label>
-                <select id="profile-title" style="width: 100%; padding: 12px; border-radius: 10px; background: #0F172A; color: white; border: 1px solid #475569;">
+                <select id="profile-title">
                     <option value="คุณตา">คุณตา</option><option value="คุณยาย">คุณยาย</option><option value="คุณปู่">คุณปู่</option><option value="คุณย่า">คุณย่า</option><option value="คุณพ่อ">คุณพ่อ</option><option value="คุณแม่">คุณแม่</option>
                 </select>
             </div>
             <div class="form-group" style="flex: 1;"><label>ชื่อ-นามสกุล / ชื่อเล่น</label><input type="text" id="profile-name" placeholder="เช่น สมหมาย"></div>
         </div>
         
-        <div style="display: flex; gap: 10px;">
+        <div style="display: flex; gap: 15px;">
             <div class="form-group" style="flex: 1;"><label>อายุ (ปี)</label><input type="number" id="profile-age" placeholder="75"></div>
-            <div class="form-group" style="flex: 1;"><label>กรุ๊ปเลือด</label><select id="profile-blood" style="width: 100%; padding: 12px; border-radius: 10px; background: #0F172A; color: white; border: 1px solid #475569;"><option value="A">A</option><option value="B">B</option><option value="O">O</option><option value="AB">AB</option></select></div>
+            <div class="form-group" style="flex: 1;"><label>กรุ๊ปเลือด</label><select id="profile-blood"><option value="A">A</option><option value="B">B</option><option value="O">O</option><option value="AB">AB</option></select></div>
         </div>
         <div class="form-group"><label>โรคประจำตัว (ถ้ามี)</label><input type="text" id="profile-disease" placeholder="เช่น เบาหวาน, ความดันสูง"></div>
         <div class="form-group"><label>ประวัติการแพ้ยา/แพ้อาหาร</label><input type="text" id="profile-allergy" placeholder="เช่น แพ้กุ้ง, แพ้ยาเพนนิซิลิน"></div>
         <div class="form-group"><label>เบอร์โทรติดต่อลูกหลาน (ฉุกเฉิน)</label><input type="text" id="profile-phone" placeholder="08X-XXX-XXXX"></div>
 
-        <button id="btn-save-profile" class="btn" style="background: var(--success); width: 100%; margin-top: 10px;" onclick="saveProfile()">บันทึกและเริ่มใช้งาน <i class="fa-solid fa-arrow-right"></i></button>
+        <button id="btn-save-profile" class="btn" style="background: var(--success); width: 100%; margin-top: 15px; font-size: 1.2rem;" onclick="saveProfile()">บันทึกและเริ่มใช้งาน <i class="fa-solid fa-arrow-right"></i></button>
     </div>
 
     <div id="video-modal">
-        <div style="padding: 15px; background: #111; display: flex; justify-content: space-between;">
-            <h3 style="color: white;"><i class="fa-solid fa-video"></i> วีดีโอคอล</h3>
+        <div style="padding: 20px; background: #111; display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="color: white;"><i class="fa-solid fa-video"></i> วีดีโอคอล</h2>
             <button class="btn" style="background: var(--danger); width: auto;" onclick="stopVideoCall()">ตัดสาย</button>
         </div>
         <div id="jitsi-container" style="flex: 1;"></div>
@@ -106,14 +108,14 @@
 
     <div id="main-dashboard" class="container">
         
-        <div style="grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; background: var(--card); padding: 15px 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);">
-            <div><i class="fa-solid fa-link" style="color:var(--primary);"></i> เป้าหมาย: <span id="display-target-id" style="font-weight: bold;"></span></div>
-            <button class="btn" style="background: rgba(255,255,255,0.1); padding: 8px 15px; font-size: 0.9rem;" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> ยกเลิกการผูกบัญชี</button>
+        <div style="grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; background: var(--card); padding: 20px 25px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 1.2rem;"><i class="fa-solid fa-link" style="color:var(--primary);"></i> เป้าหมาย: <span id="display-target-id" style="font-weight: bold; color: var(--primary);"></span></div>
+            <button class="btn" style="background: rgba(255,255,255,0.1); padding: 10px 20px;" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> ยกเลิกการผูกบัญชี</button>
         </div>
 
         <div id="sos-alert">
-            <div><h3 style="margin-bottom: 5px;"><i class="fa-solid fa-triangle-exclamation"></i> สัญญาณฉุกเฉินด่วน!</h3><p style="font-size: 0.9rem;">เช็คแผนที่หรือเปิดกล้องด่วน!</p></div>
-            <button class="btn" style="background: white; color: var(--danger);" onclick="document.getElementById('sos-alert').style.display='none'">รับทราบ</button>
+            <div><h2 style="margin-bottom: 5px;"><i class="fa-solid fa-triangle-exclamation"></i> สัญญาณฉุกเฉินด่วน!</h2><p style="font-size: 1.1rem;">ระบบกำลังดึงพิกัดแผนที่ เช็คด่วน!</p></div>
+            <button class="btn" style="background: white; color: var(--danger); font-size: 1.2rem;" onclick="document.getElementById('sos-alert').style.display='none'">รับทราบ</button>
         </div>
 
         <div class="card">
@@ -123,34 +125,37 @@
             </div>
             
             <div class="stat-grid">
-                <div class="stat-box"><span><i class="fa-solid fa-glass-water"></i> ดื่มน้ำ</span><span class="stat-value" id="stat-water">0</span></div>
-                <div class="stat-box"><span><i class="fa-solid fa-battery-half"></i> แบตเตอรี่</span><span class="stat-value" id="stat-battery" style="color:var(--warning); font-size: 1.2rem;">รอข้อมูล</span></div>
-                <div class="stat-box"><span><i class="fa-solid fa-bell"></i> อ่านแล้ว</span><span class="stat-value" id="stat-read" style="color:var(--success); font-size: 1rem;">รอส่ง</span></div>
+                <div class="stat-box"><span><i class="fa-solid fa-glass-water"></i> ดื่มน้ำ</span><span class="stat-value" id="stat-water">0 แก้ว</span></div>
+                <div class="stat-box"><span><i class="fa-solid fa-battery-half"></i> แบตเตอรี่</span><span class="stat-value" id="stat-battery" style="color:var(--warning); font-size: 1.4rem;">รอข้อมูล</span></div>
+                <div class="stat-box"><span><i class="fa-solid fa-bell"></i> สถานะการส่ง</span><span class="stat-value" id="stat-read" style="color:var(--success); font-size: 1.2rem;">พร้อมใช้งาน</span></div>
             </div>
 
             <div id="map"></div>
 
-            <button class="btn" style="background: #8B5CF6; width: 100%; margin-top: 15px;" onclick="startVideoCall()"><i class="fa-solid fa-video"></i> เปิดกล้องดูสถานการณ์</button>
+            <button class="btn" style="background: #8B5CF6; width: 100%; margin-top: 20px; font-size: 1.2rem;" onclick="startVideoCall()"><i class="fa-solid fa-video"></i> เปิดกล้องดูสถานการณ์ทันที</button>
 
-            <hr style="border: 1px solid rgba(255,255,255,0.05); margin: 20px 0;">
+            <hr style="border: 1px solid rgba(255,255,255,0.05); margin: 25px 0;">
 
             <div class="form-group"><label><i class="fa-brands fa-youtube" style="color: #FF0000;"></i> ส่งลิ้งก์ YouTube ให้ดู</label><div style="display: flex; gap: 10px;"><input type="text" id="input-youtube" placeholder="วางลิงก์ยูทูปตรงนี้..." style="margin:0;"><button class="btn" style="background: #FF0000;" onclick="sendData('youtube', false)"><i class="fa-solid fa-play"></i></button></div></div>
-            <div class="form-group"><label>🗣️ เสียงประกาศหน้าจอ</label><div style="display: flex; gap: 10px;"><input type="text" id="input-alert" placeholder="ข้อความ..." style="margin:0;"><button class="btn" style="background: var(--warning); color: black;" onclick="sendData('alert', false)"><i class="fa-solid fa-paper-plane"></i></button></div></div>
-            <div class="form-group"><label>📅 นัดหมายหมอ (เซฟถาวร)</label><div style="display: flex; gap: 10px;"><input type="text" id="input-appoint" placeholder="เช่น 20 พ.ค. รพ.ชลบุรี" style="margin:0;"><button class="btn" style="background: var(--primary);" onclick="sendData('appoint', true)"><i class="fa-solid fa-calendar-check"></i></button></div></div>
-            <div class="form-group"><label>🖼️ ส่งรูปลงสไลด์โชว์ (เซฟถาวร)</label><div style="display: flex; gap: 10px;"><input type="text" id="input-photo" placeholder="วางลิงก์รูป..." style="margin:0;"><button class="btn" style="background: #D946EF;" onclick="sendData('photo', true)"><i class="fa-solid fa-image"></i></button></div></div>
+            <div class="form-group"><label>🗣️ เสียงประกาศหน้าจอ</label><div style="display: flex; gap: 10px;"><input type="text" id="input-alert" placeholder="ข้อความที่จะให้จอพูด..." style="margin:0;"><button class="btn" style="background: var(--warning); color: black;" onclick="sendData('alert', false)"><i class="fa-solid fa-volume-high"></i></button></div></div>
+            <div class="form-group"><label>📅 นัดหมายหมอ (บันทึกถาวร)</label><div style="display: flex; gap: 10px;"><input type="text" id="input-appoint" placeholder="เช่น 20 พ.ค. รพ.ชลบุรี" style="margin:0;"><button class="btn" style="background: var(--primary);" onclick="sendData('appoint', true)"><i class="fa-solid fa-calendar-check"></i></button></div></div>
+            <div class="form-group"><label>🖼️ ส่งรูปลงสไลด์โชว์</label><div style="display: flex; gap: 10px;"><input type="text" id="input-photo" placeholder="วางลิงก์รูป..." style="margin:0;"><button class="btn" style="background: #D946EF;" onclick="sendData('photo', true)"><i class="fa-solid fa-image"></i></button></div></div>
         </div>
 
         <div class="card">
-            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); padding: 15px; border-radius: 15px; margin-bottom: 20px;">
-                <h4 style="color: var(--success); margin-bottom: 10px;"><i class="fa-solid fa-user"></i> ประวัติผู้สูงอายุ</h4>
-                <div id="profile-info-display" style="font-size: 0.9rem; color: var(--sub); line-height: 1.5;">กำลังโหลดประวัติ...</div>
+            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); padding: 20px; border-radius: 15px; margin-bottom: 25px;">
+                <h3 style="color: var(--success); margin-bottom: 10px;"><i class="fa-solid fa-user"></i> ประวัติผู้สูงอายุ</h3>
+                <div id="profile-info-display" style="font-size: 1rem; color: var(--sub); line-height: 1.6;">กำลังโหลดประวัติ...</div>
             </div>
 
             <div class="card-title"><span><i class="fa-solid fa-pills"></i> ระบบจัดการยา</span></div>
             <div class="pill-manager">
-                <div style="display: flex; gap: 10px; margin-bottom: 15px;"><input type="text" id="new-pill" placeholder="ชื่อยา + เวลา" style="margin:0;"><button class="btn" style="background: var(--success);" onclick="addPill()">เพิ่ม</button></div>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;"><input type="text" id="new-pill" placeholder="ชื่อยา + เวลา (เช่น ยาเบาหวาน เช้า)" style="margin:0;"><button class="btn" style="background: var(--success);" onclick="addPill()"><i class="fa-solid fa-plus"></i></button></div>
                 <div id="admin-pill-list"></div>
-                <div style="display: flex; gap: 10px; margin-top: 15px;"><button class="btn" style="background: var(--primary); flex: 1;" onclick="syncPillsToDevice()"><i class="fa-solid fa-upload"></i> ส่งตารางยา</button><button class="btn" style="background: #475569;" onclick="resetPillStatus()"><i class="fa-solid fa-rotate-right"></i></button></div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn" style="background: var(--primary); flex: 1;" onclick="syncPillsToDevice()"><i class="fa-solid fa-cloud-arrow-up"></i> ส่งตารางยาให้หน้าจอ</button>
+                    <button class="btn" style="background: #475569;" onclick="resetPillStatus()" title="รีเซ็ตสถานะการกินเริ่มวันใหม่"><i class="fa-solid fa-rotate-right"></i></button>
+                </div>
             </div>
         </div>
     </div>
@@ -162,6 +167,15 @@
         let myTitle = "ผู้สูงอายุ";
         let html5QrCode, onlineTimer, jitsiApi, map, marker;
         let adminPills = JSON.parse(localStorage.getItem('adminPills') || '[]');
+
+        // 🔴 ฟังก์ชันทะลวงส่งข้อมูลเข้า Sheet (กันบั๊กปุ่มค้าง)
+        function saveToCloud(payload) {
+            return fetch(GAS_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: "data=" + encodeURIComponent(JSON.stringify(payload))
+            }).catch(e => console.log("Cloud sync error: ", e));
+        }
 
         window.onload = () => {
             if (TARGET_ID) { 
@@ -201,54 +215,33 @@
 
         function showSetupProfile() { document.getElementById('login-screen').style.display = 'none'; document.getElementById('setup-screen').style.display = 'block'; }
         
-        // 🟢 แก้บั๊กปุ่มกดบันทึกแล้วค้าง
         async function saveProfile() {
             const btn = document.getElementById('btn-save-profile');
             const name = document.getElementById('profile-name').value; 
             if(!name) return alert("กรุณาใส่ชื่อด้วยครับ");
 
-            // เปลี่ยนสถานะปุ่ม
-            const originalText = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึกข้อมูล...';
             btn.disabled = true;
 
             const profileData = { 
-                action: "saveProfile", 
-                system_id: TARGET_ID, 
-                title: document.getElementById('profile-title').value, 
-                name: name, 
-                age: document.getElementById('profile-age').value || "-", 
-                blood: document.getElementById('profile-blood').value, 
-                disease: document.getElementById('profile-disease').value || "ไม่มี", 
-                allergy: document.getElementById('profile-allergy').value || "ไม่มี", 
+                action: "saveProfile", system_id: TARGET_ID, title: document.getElementById('profile-title').value, 
+                name: name, age: document.getElementById('profile-age').value || "-", blood: document.getElementById('profile-blood').value, 
+                disease: document.getElementById('profile-disease').value || "ไม่มี", allergy: document.getElementById('profile-allergy').value || "ไม่มี", 
                 phone: document.getElementById('profile-phone').value || "-" 
             };
             
-            // 1. เซฟลงเครื่อง (ทำงานทันที)
             localStorage.setItem('elderProfile_' + TARGET_ID, JSON.stringify(profileData));
-            
-            // 2. ส่งคำสั่งให้จอผู้สูงอายุอัปเดต (ทำงานทันที)
             client.publish(`familycare/${TARGET_ID}/command/profile`, JSON.stringify(profileData), { retain: true });
             
-            // 3. แอบส่งข้อมูลให้ Google Sheets แบบเงียบๆ (ไม่ค้างแน่นอน 100%)
-            try {
-                await fetch(GAS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(profileData) });
-            } catch(error) {
-                console.log("Sheet Sync Warning (Can be ignored): ", error);
-            }
-
-            // เข้าสู่หน้าควบคุมทันที
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-            document.getElementById('setup-screen').style.display = 'none'; 
-            initDashboard();
+            await saveToCloud(profileData); 
+            
+            document.getElementById('setup-screen').style.display = 'none'; initDashboard();
         }
 
         function initDashboard() {
             document.getElementById('login-screen').style.display = 'none'; document.getElementById('setup-screen').style.display = 'none'; document.getElementById('main-dashboard').style.display = 'grid'; document.getElementById('display-target-id').innerText = TARGET_ID;
             
-            const p = JSON.parse(localStorage.getItem('elderProfile_' + TARGET_ID));
-            myTitle = p.title || "ผู้สูงอายุ";
+            const p = JSON.parse(localStorage.getItem('elderProfile_' + TARGET_ID)); myTitle = p.title || "ผู้สูงอายุ";
             document.getElementById('profile-info-display').innerHTML = `<b>ชื่อ:</b> ${myTitle} ${p.name} (อายุ ${p.age} ปี)<br><b>กรุ๊ปเลือด:</b> ${p.blood} | <b>โทรฉุกเฉิน:</b> ${p.phone}<br><b>โรคประจำตัว:</b> ${p.disease}<br><b>แพ้ยา/อาหาร:</b> <span style="color:var(--danger)">${p.allergy}</span>`;
 
             renderAdminPills();
@@ -263,21 +256,9 @@
                 else if(type === 'battery') document.getElementById('stat-battery').innerText = payload;
                 else if(type === 'read_receipt') document.getElementById('stat-read').innerText = "อ่านแล้ว ✔️";
                 else if(type === 'food_request') alert(`แจ้งเตือน: ${payload}`);
-                else if(type === 'pill_taken') {
-                    alert(`✅ อัปเดต: ${myTitle}กิน ${payload} เรียบร้อยแล้ว!`);
-                    adminPills.forEach(p => { if(p.name === payload) p.taken = true; });
-                    localStorage.setItem('adminPills', JSON.stringify(adminPills)); renderAdminPills();
-                }
-                else if(type === 'sos') {
-                    document.getElementById('sos-alert').style.display = 'flex';
-                    new Audio('https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg').play(); 
-                    const data = JSON.parse(payload);
-                    if(data.lat) initMap(data.lat, data.lng);
-                }
-                else if(type === 'logout') {
-                    alert(`${myTitle}ได้ทำการรีเซ็ตเครื่องแล้ว ระบบจะกลับไปหน้าสแกน QR Code`);
-                    localStorage.removeItem('ELDER_TARGET_ID'); localStorage.removeItem('elderProfile_' + TARGET_ID); location.reload();
-                }
+                else if(type === 'pill_taken') { alert(`✅ อัปเดต: ${myTitle}กิน ${payload} เรียบร้อยแล้ว!`); adminPills.forEach(p => { if(p.name === payload) p.taken = true; }); localStorage.setItem('adminPills', JSON.stringify(adminPills)); renderAdminPills(); }
+                else if(type === 'sos') { document.getElementById('sos-alert').style.display = 'flex'; new Audio('https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg').play(); const data = JSON.parse(payload); if(data.lat) initMap(data.lat, data.lng); }
+                else if(type === 'logout') { alert(`${myTitle}ได้ทำการรีเซ็ตเครื่องแล้ว ระบบจะกลับไปหน้าสแกน QR Code`); localStorage.removeItem('ELDER_TARGET_ID'); localStorage.removeItem('elderProfile_' + TARGET_ID); location.reload(); }
             });
         }
 
@@ -288,27 +269,21 @@
             setTimeout(() => { map.invalidateSize(); if (marker) map.removeLayer(marker); marker = L.marker([lat, lng]).addTo(map).bindPopup("พิกัดฉุกเฉิน!").openPopup(); }, 300);
         }
 
-        function renderAdminPills() { const list = document.getElementById('admin-pill-list'); if(adminPills.length === 0) { list.innerHTML = '<span style="color:var(--sub)">ยังไม่มียาในระบบ</span>'; return; } list.innerHTML = adminPills.map((p, i) => `<div class="pill-item"><span style="color: ${p.taken ? 'var(--success)' : 'white'}">${p.taken ? '✔️' : '⏳'} ${p.name}</span><button class="btn" style="background:var(--danger); padding: 5px 10px;" onclick="removePill(${i})"><i class="fa-solid fa-trash"></i></button></div>`).join(''); }
+        function renderAdminPills() { const list = document.getElementById('admin-pill-list'); if(adminPills.length === 0) { list.innerHTML = '<span style="color:var(--sub); padding: 10px; display:block;">ยังไม่มียาในระบบ</span>'; return; } list.innerHTML = adminPills.map((p, i) => `<div class="pill-item"><span style="color: ${p.taken ? 'var(--success)' : 'white'}; font-weight:600;">${p.taken ? '✔️' : '⏳'} ${p.name}</span><button class="btn" style="background:var(--danger); padding: 8px 12px;" onclick="removePill(${i})"><i class="fa-solid fa-trash"></i></button></div>`).join(''); }
         function addPill() { const el = document.getElementById('new-pill'); if(!el.value) return; adminPills.push({ name: el.value, taken: false }); localStorage.setItem('adminPills', JSON.stringify(adminPills)); el.value = ""; renderAdminPills(); }
         function removePill(index) { adminPills.splice(index, 1); localStorage.setItem('adminPills', JSON.stringify(adminPills)); renderAdminPills(); }
         function resetPillStatus() { adminPills.forEach(p => p.taken = false); localStorage.setItem('adminPills', JSON.stringify(adminPills)); renderAdminPills(); syncPillsToDevice(); alert("รีเซ็ตเริ่มวันใหม่แล้ว!"); }
         
-        // 🟢 แก้อัปเดตตารางยาให้รองรับโหมดป้องกันการค้าง
         async function syncPillsToDevice() { 
             client.publish(`familycare/${TARGET_ID}/command/pills_update`, JSON.stringify(adminPills), { retain: true });
-            try { await fetch(GAS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "updatePills", system_id: TARGET_ID, pills: JSON.stringify(adminPills) }) }); } catch(e){}
+            saveToCloud({ action: "updatePills", system_id: TARGET_ID, pills: JSON.stringify(adminPills) });
             alert("ส่งตารางยาสำเร็จ!"); 
         }
 
-        // 🟢 แก้การส่งคำสั่งให้รองรับโหมดป้องกันการค้าง
         async function sendData(type, isRetain) { 
             const el = document.getElementById(`input-${type}`); if(!el.value) return; 
             client.publish(`familycare/${TARGET_ID}/command/${type}`, el.value, { retain: isRetain }); 
-            
-            if(type === 'appoint') {
-                try { await fetch(GAS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "updateAppoint", system_id: TARGET_ID, appoint: el.value }) }); } catch(e){}
-            }
-
+            if(type === 'appoint') { saveToCloud({ action: "updateAppoint", system_id: TARGET_ID, appoint: el.value }); }
             el.value = ""; document.getElementById('stat-read').innerText = "รอรับทราบ..."; alert("ส่งคำสั่งสำเร็จ!"); 
         }
 
