@@ -22,9 +22,9 @@
         .status-badge { background: rgba(0,0,0,0.3); padding: 8px 15px; border-radius: 30px; font-size: 16px; }
         .online { color: var(--success); } .offline { color: var(--danger); }
 
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;}
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;}
         .stat-box { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 15px; display: flex; flex-direction: column; gap: 5px; font-size: 16px; border: 1px solid rgba(255,255,255,0.05);}
-        .stat-value { font-size: 24px; font-weight: bold; color: var(--primary); }
+        .stat-value { font-size: 22px; font-weight: bold; color: var(--primary); }
 
         .form-group { margin-bottom: 15px; }
         input[type="text"] { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #475569; background: #0F172A; color: white; font-size: 16px; outline: none; margin-bottom: 10px;}
@@ -71,7 +71,8 @@
             
             <div class="stat-grid">
                 <div class="stat-box"><span><i class="fa-solid fa-glass-water"></i> ดื่มน้ำ</span><span class="stat-value" id="stat-water">0 แก้ว</span></div>
-                <div class="stat-box"><span><i class="fa-solid fa-bell"></i> ข้อความอ่านแล้ว</span><span class="stat-value" id="stat-read" style="color:var(--success); font-size:18px;">รอส่ง</span></div>
+                <div class="stat-box"><span><i class="fa-solid fa-battery-half"></i> แบตเตอรี่จอ</span><span class="stat-value" id="stat-battery" style="color:var(--warning);">รอข้อมูล</span></div>
+                <div class="stat-box"><span><i class="fa-solid fa-bell"></i> สถานะอ่านแล้ว</span><span class="stat-value" id="stat-read" style="color:var(--success);">รอส่ง</span></div>
             </div>
 
             <div id="map"></div>
@@ -140,7 +141,7 @@
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
             } else { map.setView([lat, lng], 16); }
             if (marker) map.removeLayer(marker);
-            marker = L.marker([lat, lng]).addTo(map).bindPopup("คุณตาอยู่ที่นี่!").openPopup();
+            marker = L.marker([lat, lng]).addTo(map).bindPopup("พิกัดฉุกเฉินของคุณตา!").openPopup();
         }
 
         client.on('connect', () => client.subscribe(`familycare/${SYSTEM_ID}/status/#`));
@@ -159,6 +160,7 @@
                 }, 7000);
             }
             else if(type === 'water') document.getElementById('stat-water').innerText = payload + " แก้ว";
+            else if(type === 'battery') document.getElementById('stat-battery').innerText = payload;
             else if(type === 'read_receipt') document.getElementById('stat-read').innerText = "อ่านแล้ว ✔️";
             else if(type === 'food_request') alert("🍕 แจ้งเตือน: " + payload);
             else if(type === 'pill_taken') {
