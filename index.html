@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Family App (HealthTech V.9)</title>
+    <title>Family App (Mobile UI 100%)</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
@@ -12,195 +12,217 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* CSS โครงสร้างเดิมของ ColorOS 16 */
-        :root { --bg: #040914; --card: rgba(20, 27, 45, 0.65); --primary: #0EA5E9; --primary-grad: linear-gradient(135deg, #0EA5E9, #3B82F6); --success: #10B981; --text: #F8FAFC; --danger: #EF4444; --danger-grad: linear-gradient(135deg, #EF4444, #B91C1C); --warning: #F59E0B;}
+        :root { --bg: #040914; --card: rgba(20, 27, 45, 0.65); --primary: #0EA5E9; --primary-grad: linear-gradient(135deg, #0EA5E9, #3B82F6); --success: #10B981; --text-main: #F8FAFC; --text-sub: #94A3B8; --danger: #EF4444; --danger-grad: linear-gradient(135deg, #EF4444, #B91C1C); --warning: #F59E0B;}
+        body.theme-light { --bg: #F1F5F9; --card: rgba(255, 255, 255, 0.85); --text-main: #0F172A; --text-sub: #475569; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Prompt', sans-serif; outline: none; -webkit-tap-highlight-color: transparent;}
-        body { background: var(--bg); background-image: radial-gradient(circle at 50% 0%, rgba(14, 165, 233, 0.15) 0%, transparent 60%); color: var(--text); padding: 20px; overflow-x: hidden; position: relative;}
-        .glass { background: var(--card); backdrop-filter: blur(30px) saturate(150%); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 32px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4); }
+        body { background: var(--bg); background-image: radial-gradient(circle at 50% 0%, rgba(14, 165, 233, 0.15) 0%, transparent 60%); color: var(--text-main); padding: 15px; overflow-x: hidden; position: relative;}
+        .glass { background: var(--card); backdrop-filter: blur(30px) saturate(150%); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 28px; box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1); transition: 0.5s;}
 
-        .auth-container { max-width: 500px; margin: 40px auto; padding: 40px; text-align: center; }
-        #reader { width: 100%; border-radius: 20px; overflow: hidden; margin-top: 20px; display: none; border: 3px solid var(--primary);}
-        
+        .auth-container { max-width: 450px; margin: 20px auto; padding: 30px; text-align: center; }
+        #reader { width: 100%; border-radius: 15px; overflow: hidden; margin-top: 15px; display: none; border: 3px solid var(--primary);}
+        #sys-banner { background: var(--warning-grad); color: black; font-weight: bold; text-align: center; padding: 10px; font-size: 1rem; display: none; border-radius: 15px; margin-bottom: 15px;}
+        #maintenance-screen { display:none; flex-direction:column; justify-content:center; align-items:center; height:80vh; text-align:center;}
         #main-dashboard, #paywall-screen { display: none; }
-        .container { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px; }
-        @media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
+        
+        .wrapper { max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+        .desktop-grid { display: flex; flex-direction: column; gap: 20px; }
+        @media (min-width: 900px) { .desktop-grid { display: grid; grid-template-columns: 1.5fr 1fr; align-items: start; } }
 
-        .card { padding: 35px; }
-        .card-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center;}
-        .status-badge { background: rgba(0,0,0,0.5); padding: 10px 18px; border-radius: 30px; font-size: 0.95rem; border: 1px solid rgba(255,255,255,0.1); }
-        
-        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-bottom: 30px;}
-        .stat-box { background: rgba(0,0,0,0.3); padding: 25px; border-radius: 24px; display: flex; flex-direction: column; gap: 8px; font-size: 1rem; border: 1px solid rgba(255,255,255,0.05); }
-        .stat-value { font-size: 2rem; font-weight: bold; color: var(--primary); }
+        .card { padding: 25px; }
+        .card-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; border-bottom: 1px solid rgba(148, 163, 184, 0.2); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;}
+        .stat-box { background: rgba(148, 163, 184, 0.1); padding: 20px; border-radius: 20px; display: flex; flex-direction: column; gap: 5px; font-size: 0.9rem; border: 1px solid rgba(148, 163, 184, 0.1); }
+        .stat-value { font-size: 1.6rem; font-weight: bold; color: var(--primary); }
 
-        .form-group { margin-bottom: 20px; text-align: left;}
-        label { display: block; margin-bottom: 10px; color: #94A3B8; font-size: 1rem; font-weight: 600;}
-        input[type="text"], input[type="password"], input[type="number"], input[type="date"], select { width: 100%; padding: 18px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.4); color: white; font-size: 1.1rem; margin-bottom: 15px; transition: 0.3s;}
-        input:focus { border-color: var(--primary); background: rgba(0,0,0,0.6);}
+        .form-group { margin-bottom: 15px; text-align: left;}
+        label { display: block; margin-bottom: 8px; color: var(--text-sub); font-size: 0.9rem; font-weight: 600;}
+        input[type="text"], input[type="password"], input[type="number"], input[type="date"], select, textarea { width: 100%; padding: 15px; border-radius: 16px; border: 1px solid rgba(148, 163, 184, 0.3); background: transparent; color: var(--text-main); font-size: 1rem; margin-bottom: 10px; transition: 0.3s;}
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); }
         
-        .btn { padding: 18px 26px; border-radius: 20px; border: none; font-size: 1.15rem; font-weight: bold; cursor: pointer; color: white; display: inline-flex; align-items: center; justify-content: center; gap: 12px; transition: 0.2s; }
-        .btn:active { transform: scale(0.92); }
-        
-        .list-manager { background: rgba(0,0,0,0.3); padding: 25px; border-radius: 24px; margin-bottom: 20px;}
-        .list-item { display: flex; justify-content: space-between; background: rgba(255,255,255,0.08); padding: 15px 20px; border-radius: 16px; margin-bottom: 12px; align-items: center;}
-        
-        .time-checks { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;}
-        .time-checks label { display: flex; align-items: center; gap: 5px; font-size: 0.9rem; margin:0; cursor: pointer; background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 10px;}
+        .btn { padding: 15px; border-radius: 16px; border: none; font-size: 1rem; font-weight: bold; cursor: pointer; color: white; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; width:100%; margin-bottom: 10px;}
+        .btn:active { transform: scale(0.95); }
+        .list-manager { background: rgba(148, 163, 184, 0.1); padding: 20px; border-radius: 20px; margin-bottom: 15px;}
+        .list-item { display: flex; justify-content: space-between; background: rgba(148, 163, 184, 0.1); padding: 15px; border-radius: 16px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; gap:10px;}
+        .time-checks { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;}
+        .time-checks label { display: flex; align-items: center; gap: 5px; font-size: 0.85rem; margin:0; cursor: pointer; background: rgba(148, 163, 184, 0.2); padding: 6px 10px; border-radius: 8px; color: var(--text-main);}
         .time-checks input { width: auto; margin:0;}
 
-        .log-container { background: rgba(0,0,0,0.3); border-radius: 24px; padding: 25px; max-height: 280px; overflow-y: auto;}
-        .log-item { display: flex; gap: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 15px 0; align-items: center;}
-        .log-time { color: var(--sub); font-size: 0.95rem; width: 65px;}
-        .log-msg { color: white; font-size: 1.05rem; flex: 1;}
+        .log-container { background: rgba(148, 163, 184, 0.1); border-radius: 20px; padding: 20px; max-height: 250px; overflow-y: auto;}
+        .log-item { display: flex; gap: 10px; border-bottom: 1px solid rgba(148, 163, 184, 0.2); padding: 12px 0; align-items: center;}
+        .log-time { color: var(--text-sub); font-size: 0.85rem; width: 55px;}
+        .log-msg { color: var(--text-main); font-size: 0.95rem; flex: 1;}
 
-        /* 🔴 แก้ไข SOS Alert ให้กดรับทราบเพื่อกระจายให้พี่น้องรู้ */
-        #sos-alert { display: none; background: var(--danger-grad); color: white; padding: 30px; border-radius: 28px; margin-bottom: 30px; justify-content: space-between; align-items: center; grid-column: 1 / -1; animation: pulse 1.5s infinite;}
-        #geofence-alert { display: none; background: linear-gradient(135deg, #F59E0B, #D97706); color: black; padding: 30px; border-radius: 28px; margin-bottom: 30px; grid-column: 1 / -1; font-weight: bold;}
-        #map { height: 320px; border-radius: 24px; border: 2px solid rgba(255,255,255,0.1); display: block; margin-top: 20px; }
+        #sos-alert { display: none; background: var(--danger-grad); color: white; padding: 25px; border-radius: 24px; margin-bottom: 20px; flex-direction:column; gap:15px;}
+        #geofence-alert { display: none; background: linear-gradient(135deg, #F59E0B, #D97706); color: black; padding: 25px; border-radius: 24px; margin-bottom: 20px; font-weight: bold;}
+        #map { height: 250px; border-radius: 20px; border: 2px solid rgba(255,255,255,0.1); display: block; margin-top: 15px; }
         
-        .toast-container { position: fixed; top: 40px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; flex-direction: column; gap: 12px; }
-        .toast { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 16px 30px; border-radius: 50px; font-weight: 600; display: flex; align-items: center; gap: 12px; animation: slideDown 0.5s forwards; }
+        .toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width:400px;}
+        .toast { background: var(--card); backdrop-filter: blur(20px); border: 1px solid rgba(148, 163, 184, 0.3); color: var(--text-main); padding: 15px 25px; border-radius: 30px; font-weight: 600; display: flex; align-items: center; gap: 10px; animation: slideDown 0.4s forwards; box-shadow: 0 10px 30px rgba(0,0,0,0.1);}
         .toast.success { border-left: 5px solid var(--success); } .toast.error { border-left: 5px solid var(--danger); }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-40px); } to { opacity: 1; transform: translateY(0); } }
         
-        .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(12px); z-index: 10001; display: flex; justify-content: center; align-items: center; opacity: 0; transition: 0.4s; pointer-events: none;}
+        .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); z-index: 10001; display: flex; justify-content: center; align-items: center; opacity: 0; transition: 0.3s; pointer-events: none;}
         .confirm-overlay.show { opacity: 1; pointer-events: auto;}
-        .confirm-box { background: rgba(20, 27, 45, 0.95); padding: 40px; border-radius: 36px; width: 90%; max-width: 420px; text-align: center; border: 1px solid rgba(255,255,255,0.15); transform: scale(0.8); transition: 0.3s;}
+        .confirm-box { background: var(--card); padding: 30px; border-radius: 24px; width: 90%; max-width: 400px; text-align: center; border: 1px solid rgba(148, 163, 184, 0.3); transform: scale(0.8); transition: 0.3s;}
         .confirm-overlay.show .confirm-box { transform: scale(1); }
-        
         .upload-btn-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; }
         .upload-btn-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; height: 100%;}
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.7); } 70% { box-shadow: 0 0 0 20px rgba(239,68,68,0); } 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); } }
     </style>
 </head>
 <body>
-
+    <div id="sys-banner"></div>
     <div id="toast-container" class="toast-container"></div>
-    <div class="confirm-overlay" id="confirm-overlay"><div class="confirm-box"><i class="fa-solid fa-circle-question" style="font-size: 70px; color: var(--primary); margin-bottom: 25px;"></i><h2 id="confirm-msg" style="margin-bottom: 35px; color: white;"></h2><div style="display:flex; gap:15px;"><button class="btn" style="background:rgba(255,255,255,0.1); flex:1;" onclick="window.cancelCallback()">ยกเลิก</button><button class="btn" style="background:var(--danger-grad); flex:1;" onclick="window.confirmCallback()">ตกลง</button></div></div></div>
+    <div class="confirm-overlay" id="confirm-overlay"><div class="confirm-box"><i class="fa-solid fa-circle-question" style="font-size: 60px; color: var(--primary); margin-bottom: 20px;"></i><h2 id="confirm-msg" style="margin-bottom: 25px; color: var(--text-main); font-size:1.2rem;"></h2><div style="display:flex; gap:10px;"><button class="btn" style="background:rgba(148, 163, 184, 0.2); color:var(--text-main); flex:1; margin:0;" onclick="window.cancelCallback()">ยกเลิก</button><button class="btn" style="background:var(--danger-grad); flex:1; margin:0;" onclick="window.confirmCallback()">ตกลง</button></div></div></div>
 
     <div id="login-screen" class="auth-container glass">
-        <i class="fa-solid fa-mobile-screen" style="font-size: 90px; color: var(--primary); margin-bottom: 25px;"></i>
-        <h2 style="margin-bottom: 30px; font-size:2rem;">แอปพลิเคชันลูกหลาน</h2>
+        <i class="fa-solid fa-mobile-screen" style="font-size: 70px; color: var(--primary); margin-bottom: 20px;"></i>
+        <h2 style="margin-bottom: 20px; font-size:1.8rem; color:var(--text-main);">แอปพลิเคชันลูกหลาน</h2>
         <input type="text" id="login-id" placeholder="รหัสเครื่อง (ELDER_XXXX)">
         <input type="password" id="login-pass" placeholder="รหัสผ่านที่ตั้งไว้">
-        <button class="btn" style="background: var(--success-grad); width: 100%; margin-bottom: 25px;" onclick="login()">เข้าสู่ระบบ</button>
-        <button class="btn" style="background: rgba(255,255,255,0.08); width: 100%; border: 1px solid rgba(255,255,255,0.2);" onclick="startScanner()"><i class="fa-solid fa-camera"></i> เปิดกล้องสแกน QR</button>
+        <button class="btn" style="background: var(--success-grad);" onclick="login()">เข้าสู่ระบบ</button>
+        <button class="btn" style="background: rgba(148, 163, 184, 0.2); border: 1px solid rgba(148, 163, 184, 0.3); color:var(--text-main);" onclick="startScanner()"><i class="fa-solid fa-camera"></i> เปิดกล้องสแกน QR</button>
         <div id="reader"></div>
     </div>
 
     <div id="paywall-screen" class="auth-container glass" style="border-color: var(--danger);">
-        <i class="fa-solid fa-file-invoice-dollar" style="font-size: 90px; color: var(--danger);"></i>
-        <h2 style="margin: 25px 0; color: white; font-size:2.5rem;">บัญชีถูกระงับ</h2>
-        <p style="color: #94A3B8; font-size:1.2rem;">กรุณาติดต่อแอดมินเพื่อชำระค่าบริการ</p>
+        <i class="fa-solid fa-file-invoice-dollar" style="font-size: 70px; color: var(--danger);"></i>
+        <h2 style="margin: 20px 0; color: var(--text-main); font-size:2rem;">บัญชีถูกระงับ</h2>
+        <p style="color: var(--text-sub); font-size:1rem;">กรุณาติดต่อแอดมินเพื่อชำระค่าบริการ</p>
     </div>
 
-    <div id="report-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:1000; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(10px);">
-        <div class="glass" style="padding: 40px; width: 100%; max-width: 800px; max-height:90vh; overflow-y:auto;">
-            <h2 style="color: var(--primary); margin-bottom: 20px;"><i class="fa-solid fa-notes-medical"></i> วิเคราะห์แนวโน้มสุขภาพ (Analytics)</h2>
-            <div id="report-content" style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 20px;"></div>
-            <div id="anomaly-alert" style="background: rgba(239,68,68,0.2); border: 1px solid var(--danger); padding: 15px; border-radius: 15px; margin-bottom: 20px; display: none; color: white; font-weight: bold;"></div>
-            
-            <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 15px; margin-bottom: 20px;"><canvas id="healthChart" width="100" height="40"></canvas></div>
-            <button class="btn" style="background: var(--danger-grad); width: 100%;" onclick="vibrate(); document.getElementById('report-modal').style.display='none'">ปิดรายงาน</button>
-        </div>
+    <div id="maintenance-screen">
+        <i class="fa-solid fa-person-digging" style="font-size: 80px; color: var(--warning); margin-bottom: 20px;"></i>
+        <h1 style="font-size: 2rem; color: var(--text-main);">ระบบกำลังปรับปรุง</h1>
+        <p style="color: var(--text-sub); font-size: 1rem; margin-top:10px;">กรุณารอสักครู่ แอดมินกำลังอัปเกรดระบบ</p>
     </div>
 
-    <div id="video-modal" style="display:none; position:fixed; inset:0; background:rgba(11,15,25,0.9); z-index:1000; flex-direction:column; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(10px);"><div style="padding: 20px; background: #111; display: flex; justify-content: space-between; width:100%;"><h2 style="color: white;"><i class="fa-solid fa-video"></i> วีดีโอคอล</h2><button class="btn" style="background: var(--danger);" onclick="stopVideoCall()">ตัดสาย</button></div><div id="jitsi-container" style="flex: 1; width:100%;"></div></div>
-
-    <div id="main-dashboard" class="container">
-        <div class="glass" style="grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; padding: 25px 35px;">
-            <div style="font-size: 1.3rem;"><i class="fa-solid fa-link" style="color:var(--primary);"></i> ควบคุมเครื่อง: <span id="display-target-id" style="font-weight: bold; color: var(--primary);"></span></div>
-            <button class="btn" style="background: rgba(255,255,255,0.1);" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ</button>
-        </div>
-
-        <div id="sos-alert">
-            <div><h2 style="margin-bottom: 5px; font-size:2rem;"><i class="fa-solid fa-triangle-exclamation"></i> ฉุกเฉินด่วน!</h2><p style="font-size:1.2rem;">ระบบดึงพิกัดแล้ว เช็คแผนที่!</p></div>
-            <button class="btn" style="background: white; color: var(--danger);" onclick="ackSOS()">รับทราบแล้ว (ส่งบอกพี่น้องคนอื่น)</button>
-        </div>
-        <div id="geofence-alert"><span style="font-size:1.2rem;"><i class="fa-solid fa-person-walking-arrow-right"></i> เตือน! ออกนอกเขตปลอดภัย</span> <button class="btn" style="background: black; color: white; float: right;" onclick="vibrate(); document.getElementById('geofence-alert').style.display='none'">รับทราบ</button></div>
-
-        <div style="display:flex; flex-direction:column; gap:30px;">
-            <div class="card glass">
-                <div class="card-title"><span><i class="fa-solid fa-microchip"></i> สถานะและพิกัด</span><span class="status-badge offline" id="online-status">ออฟไลน์</span></div>
-                <div class="stat-grid">
-                    <div class="stat-box"><span><i class="fa-solid fa-glass-water"></i> ดื่มน้ำ</span><span class="stat-value" id="stat-water">0</span></div>
-                    <div class="stat-box"><span><i class="fa-solid fa-face-smile"></i> อารมณ์วันนี้</span><span class="stat-value" id="stat-mood" style="color:var(--warning); font-size:1.3rem;">ปกติ</span></div>
-                </div>
-                <div style="margin-bottom:20px;">
-                    <button class="btn" style="background: var(--primary-grad); width:100%; box-shadow: 0 10px 20px rgba(14,165,233,0.3);" onclick="showHealthReport()"><i class="fa-solid fa-chart-line"></i> วิเคราะห์กราฟสุขภาพด้วย AI</button>
-                </div>
-                <label style="color:var(--primary); font-size:1.1rem;"><i class="fa-solid fa-map-location-dot"></i> ขอบเขตปลอดภัย (Geofence)</label>
-                <div style="display: flex; gap: 15px; margin-bottom: 15px;"><input type="number" id="geo-radius" value="500" style="margin:0;"><button class="btn" style="background: var(--success-grad);" onclick="updateGeofence()">อัปเดต</button></div>
-                <div id="map"></div>
-                <div style="display:flex; gap:15px; margin-top:25px;">
-                    <button class="btn" style="background: var(--primary-grad); flex:1;" onclick="findMyDevice()"><i class="fa-solid fa-magnifying-glass-location"></i> ค้นหาเครื่องคุณตา</button>
-                    <button class="btn" style="background: var(--danger-grad); flex:1;" onclick="startVideoCall()"><i class="fa-solid fa-video"></i> บังคับเปิดกล้องฉุกเฉิน</button>
-                </div>
-            </div>
-
-            <div class="card glass">
-                <div class="card-title"><span><i class="fa-solid fa-clock-rotate-left"></i> ประวัติล่าสุด</span></div>
-                <div class="log-container" id="activity-log"><div class="log-item"><div class="log-time">--:--</div><div class="log-msg" style="color:var(--sub);">ยังไม่มีประวัติ</div></div></div>
-            </div>
-        </div>
-
-        <div style="display:flex; flex-direction:column; gap:30px;">
-            <div class="card glass">
-                <div class="card-title"><span><i class="fa-solid fa-paper-plane"></i> แผงส่งข้อมูลไปที่จอ</span></div>
-                <div class="form-group">
-                    <label>🖼️ ส่งรูปภาพเข้าอัลบั้ม</label>
-                    <div class="upload-btn-wrapper">
-                        <button class="btn" style="background: linear-gradient(135deg, #D946EF, #C026D3); width:100%;"><i class="fa-solid fa-cloud-arrow-up"></i> เลือกรูปภาพส่งให้คุณตา</button>
-                        <input type="file" id="image-upload" accept="image/jpeg, image/png" onchange="handleImageUpload(event)" />
-                    </div>
-                </div>
-                <div class="form-group"><label><i class="fa-brands fa-youtube" style="color: #FF0000;"></i> ส่งลิ้งก์ YouTube</label><div style="display: flex; gap: 15px;"><input type="text" id="input-youtube" placeholder="วางลิงก์..."><button class="btn" style="background: #FF0000;" onclick="sendData('youtube', false)"><i class="fa-solid fa-play"></i></button></div></div>
-            </div>
-
-            <div class="card glass">
-                <div class="card-title"><span><i class="fa-solid fa-calendar-check"></i> ระบบนัดหมายหมอ</span></div>
-                <div class="list-manager">
-                    <div style="display:flex; gap:10px; margin-bottom:10px;">
-                        <input type="date" id="new-appoint-date" style="flex:1; margin:0;">
-                        <input type="text" id="new-appoint-text" placeholder="ระบุ รพ. หรือ หมอ..." style="flex:2; margin:0;">
-                    </div>
-                    <button class="btn" style="background: var(--primary); width:100%; margin-bottom:20px;" onclick="addAppoint()"><i class="fa-solid fa-plus"></i> เพิ่มนัดหมาย</button>
-                    <div id="admin-appoint-list"></div>
-                    <button class="btn" style="background: rgba(255,255,255,0.1); width:100%; margin-top:15px;" onclick="syncAppointToDevice()">ส่งตารางนัดขึ้นจอ</button>
-                </div>
-            </div>
-
-            <div class="card glass">
-                <div class="card-title"><span><i class="fa-solid fa-pills"></i> ระบบจัดการยา (และตัดสต๊อก)</span></div>
-                <div class="list-manager">
-                    <div style="display:flex; gap:10px; margin-bottom:10px;">
-                        <input type="text" id="new-pill" placeholder="ชื่อยา..." style="flex:2; margin:0;">
-                        <input type="number" id="new-pill-qty" placeholder="จำนวน(เม็ด)" style="flex:1; margin:0;">
-                    </div>
-                    <div class="time-checks">
-                        <label><input type="checkbox" id="chk-m"> เช้า</label>
-                        <label><input type="checkbox" id="chk-n"> กลางวัน</label>
-                        <label><input type="checkbox" id="chk-e"> เย็น</label>
-                        <label><input type="checkbox" id="chk-b"> ก่อนนอน</label>
-                    </div>
-                    <button class="btn" style="background: var(--success); width:100%; margin-bottom:20px;" onclick="addPill()"><i class="fa-solid fa-plus"></i> เพิ่มยาเข้าระบบ</button>
-                    <div id="admin-pill-list"></div>
-                    <div style="display: flex; gap: 15px; margin-top: 25px;"><button class="btn" style="background: var(--success-grad); flex: 1;" onclick="syncPillsToDevice()"><i class="fa-solid fa-cloud-arrow-up"></i> ส่งตารางยา</button><button class="btn" style="background: #475569;" onclick="resetPillStatus()"><i class="fa-solid fa-rotate-right"></i> รีเซ็ตวันใหม่</button></div>
-                </div>
-            </div>
+    <div id="report-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:1000; align-items:center; justify-content:center; padding:15px; backdrop-filter:blur(10px);">
+        <div class="glass" style="padding: 25px; width: 100%; max-width: 800px; max-height:90vh; overflow-y:auto;">
+            <h2 style="color: var(--primary); margin-bottom: 15px; font-size:1.5rem;"><i class="fa-solid fa-notes-medical"></i> วิเคราะห์สุขภาพ (AI Analytics)</h2>
+            <div id="report-content" style="font-size: 1rem; line-height: 1.5; margin-bottom: 15px; color:var(--text-main);"></div>
+            <div id="anomaly-alert" style="background: rgba(239,68,68,0.2); border: 1px solid var(--danger); padding: 15px; border-radius: 15px; margin-bottom: 15px; display: none; color: white; font-weight: bold; font-size:0.9rem;"></div>
+            <div style="background: rgba(148, 163, 184, 0.1); padding: 10px; border-radius: 15px; margin-bottom: 15px;"><canvas id="healthChart" width="100" height="50"></canvas></div>
+            <button class="btn" style="background: var(--danger-grad); margin:0;" onclick="vibrate(); document.getElementById('report-modal').style.display='none'">ปิดรายงาน</button>
         </div>
     </div>
 
     <div id="pill-photo-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:10001; align-items:center; justify-content:center; padding:20px;">
-        <div class="glass" style="padding: 30px; text-align:center;">
-            <h2 style="color:var(--success); margin-bottom:15px;">ยืนยันการกินยา <span id="pill-photo-name"></span></h2>
-            <img id="pill-photo-img" style="width:100%; max-width:400px; border-radius:15px; margin-bottom:15px;">
-            <button class="btn" style="background:var(--danger-grad); width:100%;" onclick="document.getElementById('pill-photo-modal').style.display='none'">ปิดหน้าต่าง</button>
+        <div class="glass" style="padding: 30px; text-align:center; width:100%; max-width:400px;">
+            <h2 style="color:var(--success); margin-bottom:15px; font-size:1.5rem;">ยืนยันการกินยา <br><span id="pill-photo-name" style="color:var(--text-main);"></span></h2>
+            <img id="pill-photo-img" style="width:100%; border-radius:15px; margin-bottom:15px; border:2px solid rgba(255,255,255,0.2);">
+            <button class="btn" style="background:var(--danger-grad); margin:0;" onclick="document.getElementById('pill-photo-modal').style.display='none'">ปิด</button>
+        </div>
+    </div>
+
+    <div id="video-modal" style="display:none; position:fixed; inset:0; background:rgba(11,15,25,0.9); z-index:1000; flex-direction:column; align-items:center; justify-content:center; padding:20px;"><div style="padding: 15px; background: #111; display: flex; justify-content: space-between; width:100%; border-radius:15px 15px 0 0;"><h2 style="color: white; font-size:1.2rem;"><i class="fa-solid fa-video"></i> วีดีโอคอล</h2><button class="btn" style="background: var(--danger); width:auto; padding:8px 15px; margin:0;" onclick="stopVideoCall()">ตัดสาย</button></div><div id="jitsi-container" style="flex: 1; width:100%;"></div></div>
+
+    <div id="main-dashboard" class="wrapper">
+        <div class="glass" style="display: flex; flex-wrap:wrap; justify-content: space-between; align-items: center; padding: 20px; gap:10px;">
+            <div style="font-size: 1.1rem;"><i class="fa-solid fa-link" style="color:var(--primary);"></i> เป้าหมาย: <span id="display-target-id" style="font-weight: bold; color: var(--primary);"></span></div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn" style="background: var(--primary); padding:10px; margin:0; width:auto;" onclick="showHealthReport()"><i class="fa-solid fa-file-medical"></i></button>
+                <button class="btn" style="background: rgba(148, 163, 184, 0.2); color:var(--text-main); padding:10px; margin:0; width:auto;" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i></button>
+            </div>
+        </div>
+
+        <div id="voice-box" class="glass" style="background: rgba(139, 92, 246, 0.2); border: 1px solid #8B5CF6; padding: 20px; border-radius: 20px; display: none; align-items: center; justify-content: space-between; flex-wrap:wrap; gap:10px;"><div style="font-weight: bold; color: #D8B4FE; font-size:1.1rem;"><i class="fa-solid fa-microphone-lines"></i> มีข้อความเสียงใหม่!</div><audio id="audio-player" controls style="height: 40px; width:100%;"></audio></div>
+
+        <div id="sos-alert">
+            <div><h2 style="margin-bottom: 5px; font-size:1.5rem;"><i class="fa-solid fa-triangle-exclamation"></i> ฉุกเฉินด่วน!</h2><p style="font-size:1rem;">ระบบดึงพิกัดแล้ว เช็คแผนที่!</p></div>
+            <button class="btn" style="background: white; color: var(--danger); margin:0;" onclick="ackSOS()">รับทราบแล้ว (ส่งบอกพี่น้อง)</button>
+        </div>
+        <div id="geofence-alert"><span style="font-size:1rem;"><i class="fa-solid fa-person-walking-arrow-right"></i> เตือน! ออกนอกเขตปลอดภัย</span> <button class="btn" style="background: black; color: white; margin:10px 0 0 0;" onclick="vibrate(); document.getElementById('geofence-alert').style.display='none'">รับทราบ</button></div>
+
+        <div class="desktop-grid">
+            <div style="display:flex; flex-direction:column; gap:20px;">
+                <div class="card glass">
+                    <div class="card-title"><span><i class="fa-solid fa-microchip"></i> สถานะและพิกัด</span><span class="status-badge offline" id="online-status">ออฟไลน์</span></div>
+                    <div class="stat-grid">
+                        <div class="stat-box"><span><i class="fa-solid fa-glass-water"></i> ดื่มน้ำ</span><span class="stat-value" id="stat-water">0</span></div>
+                        <div class="stat-box"><span><i class="fa-solid fa-face-smile"></i> อารมณ์วันนี้</span><span class="stat-value" id="stat-mood" style="color:var(--warning); font-size:1.1rem;">ปกติ</span></div>
+                    </div>
+                    <label style="color:var(--primary); font-size:1rem;"><i class="fa-solid fa-map-location-dot"></i> ขอบเขตปลอดภัย (Geofence)</label>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;"><input type="number" id="geo-radius" value="500" style="margin:0;"><button class="btn" style="background: var(--success-grad); width:auto; margin:0; padding:10px 20px;" onclick="updateGeofence()">ตั้งค่า</button></div>
+                    <div id="map"></div>
+                    <div style="display:flex; gap:10px; margin-top:20px; flex-wrap:wrap;">
+                        <button class="btn" style="background: var(--primary-grad); margin:0;" onclick="findMyDevice()"><i class="fa-solid fa-magnifying-glass-location"></i> ค้นหาเครื่อง</button>
+                        <button class="btn" style="background: var(--danger-grad); margin:0;" onclick="startVideoCall()"><i class="fa-solid fa-video"></i> บังคับเปิดกล้อง</button>
+                    </div>
+                </div>
+
+                <div class="card glass">
+                    <div class="card-title"><span><i class="fa-solid fa-clock-rotate-left"></i> ประวัติล่าสุด</span></div>
+                    <div class="log-container" id="activity-log"><div class="log-item"><div class="log-time">--:--</div><div class="log-msg" style="color:var(--sub);">ยังไม่มีประวัติ</div></div></div>
+                </div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:20px;">
+                
+                <div class="card glass" style="border-color:var(--warning);">
+                    <div class="card-title"><span><i class="fa-solid fa-headset" style="color:var(--warning);"></i> แจ้งปัญหาการใช้งาน (Ticket)</span></div>
+                    <input type="text" id="ticket-subj" placeholder="ระบุหัวข้อปัญหา เช่น จอดำ, สั่นไม่หยุด..." style="margin-bottom:10px;">
+                    <textarea id="ticket-desc" placeholder="อธิบายรายละเอียดปัญหาให้แอดมินทราบ..." rows="3"></textarea>
+                    <button class="btn" style="background: var(--warning); color:black; margin:0;" onclick="submitTicket()"><i class="fa-solid fa-paper-plane"></i> ส่งปัญหาให้แอดมิน</button>
+                </div>
+
+                <div class="card glass">
+                    <div class="card-title"><span><i class="fa-solid fa-paper-plane"></i> แผงส่งข้อมูลไปที่จอ</span></div>
+                    <div class="form-group">
+                        <label>🖼️ ส่งรูปภาพเข้าอัลบั้ม</label>
+                        <div class="upload-btn-wrapper">
+                            <button class="btn" style="background: linear-gradient(135deg, #D946EF, #C026D3); margin:0;"><i class="fa-solid fa-cloud-arrow-up"></i> เลือกรูปภาพส่งให้คุณตา</button>
+                            <input type="file" id="image-upload" accept="image/jpeg, image/png" onchange="handleImageUpload(event)" />
+                        </div>
+                    </div>
+                    <div class="form-group"><label><i class="fa-brands fa-youtube" style="color: #FF0000;"></i> ส่งลิ้งก์ YouTube</label><div style="display: flex; gap: 10px;"><input type="text" id="input-youtube" placeholder="วางลิงก์..." style="margin:0;"><button class="btn" style="background: #FF0000; width:auto; margin:0;" onclick="sendData('youtube', false)"><i class="fa-solid fa-play"></i></button></div></div>
+                </div>
+
+                <div class="card glass">
+                    <div class="card-title"><span><i class="fa-solid fa-calendar-check"></i> นัดหมายหมอ</span></div>
+                    <div class="list-manager">
+                        <input type="date" id="new-appoint-date" style="margin-bottom:10px;">
+                        <select id="new-appoint-time" style="margin-bottom:10px;" onchange="checkCustomTime()">
+                            <option value="08:30 - 10:00">08:30 - 10:00</option>
+                            <option value="10:00 - 11:00">10:00 - 11:00</option>
+                            <option value="13:00 - 14:00">13:00 - 14:00</option>
+                            <option value="other">อื่นๆ (ระบุเอง)</option>
+                        </select>
+                        <input type="text" id="new-appoint-time-custom" placeholder="ระบุเวลา..." style="display:none; margin-bottom:10px;">
+                        <input type="text" id="new-appoint-text" placeholder="ระบุ รพ. หรือ หมอ..." style="margin-bottom:15px;">
+                        <button class="btn" style="background: var(--primary); margin-bottom:20px;" onclick="addAppoint()"><i class="fa-solid fa-plus"></i> เพิ่มนัดหมาย</button>
+                        <div id="admin-appoint-list"></div>
+                        <button class="btn" style="background: rgba(148, 163, 184, 0.2); color:var(--text-main); margin-top:15px; margin-bottom:0;" onclick="syncAppointToDevice()">ส่งตารางนัดขึ้นจอ</button>
+                    </div>
+                </div>
+
+                <div class="card glass">
+                    <div class="card-title"><span><i class="fa-solid fa-pills"></i> ระบบจัดการยา</span></div>
+                    <div class="list-manager">
+                        <div style="display:flex; gap:10px; margin-bottom:10px;">
+                            <input type="text" id="new-pill" placeholder="ชื่อยา..." style="flex:2; margin:0;">
+                            <input type="number" id="new-pill-qty" placeholder="สต๊อก" style="flex:1; margin:0;">
+                        </div>
+                        <div class="time-checks">
+                            <label><input type="checkbox" id="chk-m"> เช้า</label>
+                            <label><input type="checkbox" id="chk-n"> กลางวัน</label>
+                            <label><input type="checkbox" id="chk-e"> เย็น</label>
+                            <label><input type="checkbox" id="chk-b"> ก่อนนอน</label>
+                        </div>
+                        <button class="btn" style="background: var(--success); margin-bottom:20px;" onclick="addPill()"><i class="fa-solid fa-plus"></i> เพิ่มยาเข้าระบบ</button>
+                        <div id="admin-pill-list"></div>
+                        <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap:wrap;">
+                            <button class="btn" style="background: var(--success-grad); flex: 1; margin:0;" onclick="syncPillsToDevice()"><i class="fa-solid fa-cloud-arrow-up"></i> ส่งตารางยา</button>
+                            <button class="btn" style="background: rgba(148,163,184,0.3); color:var(--text-main); margin:0;" onclick="resetPillStatus()"><i class="fa-solid fa-rotate-right"></i> รีเซ็ตวัน</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzph3otQ0ERZxWxwb8t-GrJbDeuzz9K4zMUCl4DpacNNItpZXX5OgoRKKwqfymLLn6fAw/exec";
+        // 🔴 เอา URL ใหม่ยัดให้แล้วตรงนี้
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwtvPmWcppoVgcxilzSBdaVuhDjK95DQ0wGKv1fGly8xGbKNb8UHzCJSNbol6_ismZopg/exec";
         const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', { keepalive: 30, reconnectPeriod: 1000 });
         let TARGET_ID = localStorage.getItem('ELDER_TARGET_ID'), myTitle = "ผู้สูงอายุ";
         let html5QrCode, onlineTimer, map, marker, geoCircle, jitsiApi;
@@ -208,26 +230,16 @@
         let adminPills = JSON.parse(localStorage.getItem('adminPills') || '[]');
         let adminAppoints = JSON.parse(localStorage.getItem('adminAppoints') || '[]'); 
         let logs = JSON.parse(localStorage.getItem('activityLogs') || '[]');
-        let healthHistory = []; 
-        let chartInstance = null;
-
+        let healthHistory = []; let chartInstance = null;
         let homeLat = 13.3155, homeLng = 100.9535, geoRadius = parseInt(localStorage.getItem('geoRadius') || 500);
 
-        // 🔴 Web Push Notification
-        function notifyUser(title, body) {
-            if (Notification.permission === 'granted') { new Notification(title, { body: body, icon: 'https://cdn-icons-png.flaticon.com/512/3063/3063206.png' }); }
-        }
-
+        function notifyUser(title, body) { if (Notification.permission === 'granted') new Notification(title, { body: body, icon: 'https://cdn-icons-png.flaticon.com/512/3063/3063206.png' }); }
         function vibrate() { if(navigator.vibrate) navigator.vibrate(50); }
-        function showToast(msg, type='info') { let box = document.getElementById('toast-container'); let el = document.createElement('div'); el.className = `toast ${type}`; el.innerHTML = `<i class="fa-solid ${type==='success'?'fa-check-circle':type==='error'?'fa-circle-exclamation':'fa-bell'}" style="font-size:1.5rem;"></i> <span>${msg}</span>`; box.appendChild(el); setTimeout(() => { el.style.animation = 'slideUpFade 0.4s forwards'; setTimeout(()=>el.remove(),400); }, 3500); }
+        function showToast(msg, type='info') { let box = document.getElementById('toast-container'); let el = document.createElement('div'); el.className = `toast ${type}`; el.innerHTML = `<i class="fa-solid ${type==='success'?'fa-check-circle':type==='error'?'fa-circle-exclamation':'fa-bell'}" style="font-size:1.2rem;"></i> <span>${msg}</span>`; box.appendChild(el); setTimeout(() => { el.style.animation = 'slideUpFade 0.4s forwards'; setTimeout(()=>el.remove(),400); }, 3000); }
         function customConfirm(msg, callback) { vibrate(); document.getElementById('confirm-msg').innerText = msg; const overlay = document.getElementById('confirm-overlay'); overlay.classList.add('show'); window.confirmCallback = () => { vibrate(); overlay.classList.remove('show'); callback(); }; window.cancelCallback = () => { vibrate(); overlay.classList.remove('show'); }; }
         function saveToCloud(payload) { const formData = new URLSearchParams(); formData.append('data', JSON.stringify(payload)); return fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: formData }); }
 
-        window.onload = () => { 
-            if (TARGET_ID) checkProfileCloud(); 
-            document.getElementById('geo-radius').value = geoRadius; 
-            if (Notification.permission !== 'granted') Notification.requestPermission(); 
-        };
+        window.onload = () => { if (TARGET_ID) checkProfileCloud(); document.getElementById('geo-radius').value = geoRadius; if (Notification.permission !== 'granted') Notification.requestPermission(); };
 
         async function login() {
             vibrate(); const id = document.getElementById('login-id').value, pass = document.getElementById('login-pass').value;
@@ -235,10 +247,7 @@
             try { const res = await fetch(`${GAS_URL}?action=login&id=${id}&pass=${pass}`); const data = await res.json(); if(data.status === 'success') { TARGET_ID = id; localStorage.setItem('ELDER_TARGET_ID', id); checkProfileCloud(); showToast('เข้าสู่ระบบสำเร็จ!', 'success'); } else showToast("รหัสไม่ถูกต้อง", 'error'); } catch(e) { showToast('ขัดข้อง', 'error'); }
         }
 
-        function startScanner() { 
-            vibrate(); document.getElementById('reader').style.display = "block"; html5QrCode = new Html5Qrcode("reader"); 
-            html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: { width: 250, height: 250 }, disableFlip: false }, (decodedText) => { html5QrCode.stop().then(() => { document.getElementById('reader').style.display = "none"; document.getElementById('login-id').value = decodedText; showToast("สแกนสำเร็จ กรุณาใส่รหัสผ่าน", "success"); vibrate();}); }, (err) => { }).catch((err) => { showToast("เปิดกล้องไม่ได้", "error"); }); 
-        }
+        function startScanner() { vibrate(); document.getElementById('reader').style.display = "block"; html5QrCode = new Html5Qrcode("reader"); html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 }, disableFlip: false }, (decodedText) => { html5QrCode.stop().then(() => { document.getElementById('reader').style.display = "none"; document.getElementById('login-id').value = decodedText; showToast("สแกนสำเร็จ", "success"); vibrate();}); }, (err) => { }).catch((err) => { showToast("เปิดกล้องไม่ได้", "error"); }); }
 
         async function checkProfileCloud() {
             try {
@@ -246,203 +255,94 @@
                 if(data.status === "Suspended") { document.getElementById('login-screen').style.display = 'none'; document.getElementById('paywall-screen').style.display = 'block'; return; }
                 localStorage.setItem('elderProfile_' + TARGET_ID, JSON.stringify(data));
                 if(data.healthHistory && data.healthHistory !== "[]") healthHistory = JSON.parse(data.healthHistory);
-                if(data.settings) { let set = JSON.parse(data.settings); geoRadius = set.geoRadius || 500; document.getElementById('geo-radius').value = geoRadius; }
+                if(data.settings) { let set = JSON.parse(data.settings); geoRadius = set.geoRadius || 500; document.getElementById('geo-radius').value = geoRadius; if(set.theme === 'light') document.body.className = "theme-light"; else if(set.theme === 'dark') document.body.className = ""; }
                 initDashboard();
             } catch(e) { if(localStorage.getItem('elderProfile_' + TARGET_ID)) initDashboard(); }
         }
 
-        function logout() { customConfirm("ยกเลิกการผูกเครื่อง?", () => { localStorage.removeItem('ELDER_TARGET_ID'); localStorage.removeItem('elderProfile_' + TARGET_ID); location.reload(); }); }
+        function logout() { customConfirm("ยกเลิกการเชื่อมต่อ?", () => { localStorage.removeItem('ELDER_TARGET_ID'); localStorage.removeItem('elderProfile_' + TARGET_ID); location.reload(); }); }
         function addLog(msg) { const time = new Date().toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'}); logs.unshift({time, msg}); if(logs.length > 20) logs.pop(); localStorage.setItem('activityLogs', JSON.stringify(logs)); renderLogs(); }
         function renderLogs() { const c = document.getElementById('activity-log'); if(logs.length === 0) return; c.innerHTML = logs.map(l => `<div class="log-item"><div class="log-time">${l.time}</div><div class="log-msg">${l.msg}</div></div>`).join(''); }
 
+        function submitTicket() {
+            vibrate(); const subj = document.getElementById('ticket-subj').value; const desc = document.getElementById('ticket-desc').value;
+            if(!subj || !desc) return showToast("กรุณากรอกให้ครบ", "error");
+            showToast("กำลังส่งข้อมูล...", "info");
+            saveToCloud({ action: "submitTicket", system_id: TARGET_ID, subject: subj, desc: desc });
+            setTimeout(() => { showToast("ส่ง Ticket สำเร็จ! แอดมินจะตรวจสอบเร็วๆ นี้", "success"); document.getElementById('ticket-subj').value = ""; document.getElementById('ticket-desc').value = ""; }, 1500);
+        }
+
         function initDashboard() {
-            document.getElementById('login-screen').style.display='none'; document.getElementById('main-dashboard').style.display='grid';
+            document.getElementById('login-screen').style.display='none'; document.getElementById('main-dashboard').style.display='flex'; 
             document.getElementById('display-target-id').innerText = TARGET_ID;
             const p = JSON.parse(localStorage.getItem('elderProfile_' + TARGET_ID)); myTitle = p.title || "ผู้สูงอายุ";
             renderAdminPills(); renderAppoints(); renderLogs(); initMap(homeLat, homeLng);
             
-            if(!client.connected) client.reconnect(); client.subscribe(`familycare/${TARGET_ID}/status/#`); client.subscribe(`familycare/${TARGET_ID}/command/ack_sos`);
+            if(!client.connected) client.reconnect(); client.subscribe(`familycare/${TARGET_ID}/status/#`); client.subscribe(`familycare/${TARGET_ID}/command/ack_sos`); client.subscribe(`familycare/broadcast`); client.subscribe(`familycare/broadcast_banner`); client.subscribe(`familycare/broadcast_theme`); client.subscribe(`familycare/broadcast_maintenance`);
 
             client.on('message', (topic, message) => {
                 const payload = message.toString(); const type = topic.split('/').pop();
-                
-                // 🔴 แจ้งเตือนพี่น้อง (Multi-Caregiver)
-                if(topic === `familycare/${TARGET_ID}/command/ack_sos`) {
-                    document.getElementById('sos-alert').style.display = 'none';
-                    showToast(`${payload} เข้าช่วยเหลือคุณตาแล้ว!`, "success"); addLog(`${payload} เคลียร์คิว SOS`); return;
-                }
+                if(topic === 'familycare/broadcast_banner') { document.getElementById('sys-banner').innerText = payload; document.getElementById('sys-banner').style.display = 'block'; return; }
+                if(topic === 'familycare/broadcast_theme') { if(payload === 'light') document.body.className = "theme-light"; else document.body.className = ""; return; }
+                if(topic === 'familycare/broadcast_maintenance') { if(payload === 'start'){ document.getElementById('main-dashboard').style.display = 'none'; document.getElementById('maintenance-screen').style.display = 'flex'; } else { location.reload(); } return; }
+                if(topic === `familycare/${TARGET_ID}/command/ack_sos`) { document.getElementById('sos-alert').style.display = 'none'; showToast(`${payload} รับทราบเคสแล้ว`, "success"); addLog(`${payload} เคลียร์คิว SOS`); return; }
 
-                if(type === 'heartbeat') { document.getElementById('online-status').innerText = "ออนไลน์ 🟢"; document.getElementById('online-status').className = "status-badge online"; clearTimeout(onlineTimer); onlineTimer = setTimeout(() => { document.getElementById('online-status').innerText = "ออฟไลน์ 🔴"; document.getElementById('online-status').className = "status-badge offline"; }, 7000); }
+                if(type === 'heartbeat') { 
+                    const badge = document.getElementById('online-status');
+                    badge.innerText = "ออนไลน์ 🟢"; badge.style.background = "var(--success)"; badge.style.color = "white";
+                    if(onlineTimer) clearTimeout(onlineTimer); 
+                    onlineTimer = setTimeout(() => { badge.innerText = "ออฟไลน์ 🔴"; badge.style.background = "var(--danger)"; }, 8000); 
+                }
+                
                 else if(type === 'water') { document.getElementById('stat-water').innerText = payload; addLog(`ดื่มน้ำ (${payload} แก้ว)`); }
-                else if(type === 'mood') { document.getElementById('stat-mood').innerText = payload; addLog(`อารมณ์: ${payload}`); showToast(`${myTitle} ${payload}`, "info"); notifyUser("อัปเดตอารมณ์", `${myTitle} ${payload}`);}
-                
-                // 🔴 รับรูปถ่ายตอนกินยา (Photo Verification)
-                else if(type === 'pill_photo') {
-                    const data = JSON.parse(payload);
-                    document.getElementById('pill-photo-name').innerText = data.name;
-                    document.getElementById('pill-photo-img').src = data.img;
-                    document.getElementById('pill-photo-modal').style.display = 'flex';
-                    addLog(`ถ่ายรูปยืนยันการกินยา: ${data.name}`);
-                }
-
-                // 🔴 รับแจ้งกินยาและลบสต๊อก
-                else if(type === 'pill_taken') { 
-                    const pName = payload; showToast(`${myTitle}ทาน ${pName} แล้ว`, "success"); addLog(`ทานยา: ${pName}`); notifyUser("ทานยาแล้ว", `${myTitle} ทานยา ${pName} แล้ว`);
-                    // ให้โหลดข้อมูลจาก Cloud ใหม่เพื่อให้แน่ใจว่าสต๊อกอัปเดตชัวร์ (เพราะ Server หักลบให้แล้ว)
-                    setTimeout(checkProfileCloud, 2000);
-                }
-                
-                else if(type === 'health') { checkProfileCloud(); showToast(`${myTitle} บันทึกสุขภาพรายวันแล้ว!`, "success"); addLog("อัปเดตข้อมูลสุขภาพ"); notifyUser("บันทึกสุขภาพ", `${myTitle} บันทึกสุขภาพรายวันแล้ว`);}
+                else if(type === 'mood') { document.getElementById('stat-mood').innerText = payload; addLog(`อารมณ์: ${payload}`); notifyUser("อารมณ์วันนี้", `${myTitle} ${payload}`);}
+                else if(type === 'pill_photo') { const data = JSON.parse(payload); adminPills.forEach(p => { if(p.name === data.name) p.photoStr = data.img; }); localStorage.setItem('adminPills', JSON.stringify(adminPills)); renderAdminPills(); document.getElementById('pill-photo-name').innerText = data.name; document.getElementById('pill-photo-img').src = data.img; document.getElementById('pill-photo-modal').style.display = 'flex'; addLog(`ถ่ายรูปกินยา: ${data.name}`); }
+                else if(type === 'pill_taken') { const pName = payload; showToast(`ทาน ${pName} แล้ว`, "success"); addLog(`ทานยา: ${pName}`); notifyUser("ทานยา", `ทาน ${pName} แล้ว`); setTimeout(checkProfileCloud, 1000); }
+                else if(type === 'health') { checkProfileCloud(); showToast(`บันทึกสุขภาพแล้ว!`, "success"); addLog("อัปเดตข้อมูลสุขภาพ"); notifyUser("บันทึกสุขภาพ", `บันทึกสุขภาพรายวันแล้ว`);}
                 else if(type === 'sos') { 
                     const data = JSON.parse(payload);
-                    if(data.error === "INACTIVITY") {
-                        showToast(`🚨 ระวัง! ไม่มีการเคลื่อนไหวเกิน 12 ชั่วโมง!`, "error"); addLog(`⚠️ ไม่เคลื่อนไหว 12 ชม.!`); notifyUser("🚨 เตือนฉุกเฉิน", `${myTitle} ไม่มีการโต้ตอบหน้าจอเกิน 12 ชั่วโมง!`);
-                    } else if(data.error === "SIREN_LOCAL") {
-                        showToast(`🚨 เปิดไซเรนจากหน้าจอ!`, "error"); addLog(`🚨 เปิดไซเรนจากจอ!`); notifyUser("🚨 เตือนฉุกเฉิน", `${myTitle} เปิดไซเรนขอความช่วยเหลือ!`);
-                    } else {
-                        document.getElementById('sos-alert').style.display = 'flex'; new Audio('https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg').play(); addLog(`🚨 กด SOS ขอความช่วยเหลือ!`); notifyUser("🚨 SOS ฉุกเฉิน!", `${myTitle} กดปุ่มขอความช่วยเหลือ!`); if(data.lat) processLocation(data.lat, data.lng); 
-                    }
+                    if(data.error === "INACTIVITY") { showToast(`🚨 ไม่เคลื่อนไหวเกิน 12 ชม.!`, "error"); notifyUser("🚨 เตือนฉุกเฉิน", `ไม่โต้ตอบหน้าจอ 12 ชม.!`); } 
+                    else if(data.error === "SIREN_LOCAL") { showToast(`🚨 เปิดไซเรนจากหน้าจอ!`, "error"); notifyUser("🚨 ฉุกเฉิน", `เปิดไซเรนขอความช่วยเหลือ!`); } 
+                    else { document.getElementById('sos-alert').style.display = 'flex'; new Audio('https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg').play(); addLog(`🚨 กด SOS!`); notifyUser("🚨 SOS!", `กดปุ่มฉุกเฉิน!`); if(data.lat) processLocation(data.lat, data.lng); }
                 }
                 else if(type === 'location') { const data = JSON.parse(payload); if(data.lat) processLocation(data.lat, data.lng); }
-                else if(type === 'voice') { document.getElementById('audio-player').src = payload; document.getElementById('voice-box').style.display = 'flex'; addLog(`🎤 ส่งข้อความเสียง`); showToast("มีข้อความเสียงใหม่!", "info"); notifyUser("ข้อความเสียง", `มีข้อความเสียงใหม่จาก ${myTitle}`);}
+                else if(type === 'voice') { document.getElementById('audio-player').src = payload; document.getElementById('voice-box').style.display = 'flex'; addLog(`🎤 เสียงใหม่`); showToast("มีข้อความเสียง!", "info"); notifyUser("ข้อความเสียง", `เสียงจาก ${myTitle}`);}
             });
         }
 
-        // 🔴 รับทราบฉุกเฉิน
-        function ackSOS() {
-            vibrate(); const name = prompt("ใส่ชื่อของคุณเพื่อแจ้งให้คนในครอบครัวรู้:");
-            if(!name) return;
-            client.publish(`familycare/${TARGET_ID}/command/ack_sos`, name, {qos:1});
-            document.getElementById('sos-alert').style.display = 'none';
-        }
-
-        function showHealthReport() {
-            vibrate(); const p = JSON.parse(localStorage.getItem('elderProfile_' + TARGET_ID));
-            let latestHealth = healthHistory.length > 0 ? healthHistory[healthHistory.length-1] : null;
-            const lvls = ["<span class='symp-level symp-l0'>ไม่มี</span>", "<span class='symp-level symp-l1'>น้อย</span>", "<span class='symp-level symp-l2'>ปานกลาง</span>", "<span class='symp-level symp-l3'>มาก</span>"];
-            
-            let hHTML = "<p style='color:var(--sub);'>ยังไม่มีการบันทึกสุขภาพจากหน้าจอ</p>";
-            
-            // 🔴 AI Health Anomaly Alert
-            if(healthHistory.length >= 3) {
-                let recent = healthHistory.slice(-3);
-                let highBpCount = recent.filter(h => parseInt(h.bp.split('/')[0]) > 130).length;
-                if(highBpCount >= 3) {
-                    document.getElementById('anomaly-alert').innerHTML = `<i class="fa-solid fa-brain"></i> <b>AI Alert:</b> ความดัน (SYS) สูงเกิน 130 ติดต่อกัน 3 ครั้งล่าสุด แนะนำให้พา ${myTitle} ไปพบแพทย์!`;
-                    document.getElementById('anomaly-alert').style.display = 'block';
-                } else { document.getElementById('anomaly-alert').style.display = 'none'; }
-            }
-
-            if(latestHealth) {
-                hHTML = `
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
-                    <div class="report-section"><i class="fa-solid fa-bed" style="color:#38BDF8;"></i> นอนหลับ: <b style="font-size:1.4rem;">${latestHealth.s}</b> ชม.</div>
-                    <div class="report-section"><i class="fa-solid fa-heart-pulse" style="color:var(--danger);"></i> ชีพจร: <b style="font-size:1.4rem;">${latestHealth.hr}</b> BPM</div>
-                    <div class="report-section"><i class="fa-solid fa-pump-medical" style="color:var(--success);"></i> ความดัน: <b style="font-size:1.4rem;">${latestHealth.bp}</b></div>
-                    <div class="report-section"><i class="fa-solid fa-lungs" style="color:var(--primary);"></i> ออกซิเจน: <b style="font-size:1.4rem;">${latestHealth.o2}</b>%</div>
-                    <div class="report-section"><i class="fa-solid fa-droplet" style="color:#EAB308;"></i> ปัสสาวะ: <b style="font-size:1.4rem;">${latestHealth.u}</b> ครั้ง</div>
-                    <div class="report-section"><i class="fa-solid fa-poop" style="color:#8B5CF6;"></i> อุจจาระ: <b style="font-size:1.4rem;">${latestHealth.f}</b> ครั้ง</div>
-                </div>
-                <div class="report-section">
-                    <h3 style="margin-bottom:10px; color:var(--warning);">ประเมินอาการปวดล่าสุด</h3>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;"><span>ปวดหัว:</span> ${lvls[latestHealth.symp.head]}</div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;"><span>ปวดท้อง:</span> ${lvls[latestHealth.symp.stom]}</div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;"><span>ปวดฟัน:</span> ${lvls[latestHealth.symp.tooth]}</div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>ปวดเมื่อย:</span> ${lvls[latestHealth.symp.body]}</div>
-                </div>
-                `;
-            }
-
-            document.getElementById('report-content').innerHTML = `
-                <div class="report-section"><b style="color:var(--primary);">ข้อมูล:</b> ${p.title} ${p.name} (อายุ ${p.age})<br><b>โรคประจำตัว:</b> ${p.disease}<br><b>แพ้ยา:</b> <span style="color:var(--danger)">${p.allergy}</span></div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;"><div class="report-section" style="text-align:center;"><b style="color:var(--success);">ทานยา</b><br><span style="font-size:2rem; font-weight:bold;">${adminPills.filter(x => x.taken).length}/${adminPills.length}</span></div><div class="report-section" style="text-align:center;"><b style="color:var(--primary);">ดื่มน้ำวันนี้</b><br><span style="font-size:2rem; font-weight:bold;">${document.getElementById('stat-water').innerText}</span></div></div>
-                <hr style="border:1px solid rgba(255,255,255,0.1); margin:20px 0;">
-                ${hHTML}
-            `;
-            document.getElementById('report-modal').style.display = 'flex';
-
-            if(healthHistory.length > 0) {
-                const labels = healthHistory.map(h => h.time.substring(0, 5));
-                const dataHR = healthHistory.map(h => h.hr);
-                const dataSYS = healthHistory.map(h => parseInt(h.bp.split('/')[0]));
-
-                if(chartInstance) chartInstance.destroy();
-                const ctx = document.getElementById('healthChart').getContext('2d');
-                chartInstance = new Chart(ctx, {
-                    type: 'line',
-                    data: { labels: labels, datasets: [
-                            { label: 'ชีพจร (BPM)', data: dataHR, borderColor: '#EF4444', backgroundColor: 'rgba(239,68,68,0.2)', fill: true, tension: 0.4 },
-                            { label: 'ความดัน SYS', data: dataSYS, borderColor: '#0EA5E9', backgroundColor: 'rgba(14,165,233,0.2)', fill: true, tension: 0.4 }
-                        ] },
-                    options: { responsive: true, scales: { y: { beginAtZero: false } }, plugins: { legend: { labels: { color: 'white' } } } }
-                });
-            }
-        }
-
+        function ackSOS() { vibrate(); const name = prompt("ใส่ชื่อของคุณ:"); if(!name) return; client.publish(`familycare/${TARGET_ID}/command/ack_sos`, name, {qos:0}); document.getElementById('sos-alert').style.display = 'none'; }
+        function showHealthReport() { vibrate(); document.getElementById('report-modal').style.display = 'flex'; }
+        function viewPillPhoto(img) { document.getElementById('pill-photo-name').innerText = "ย้อนหลัง"; document.getElementById('pill-photo-img').src = img; document.getElementById('pill-photo-modal').style.display = 'flex'; }
+        
         function renderAdminPills() { 
-            const list = document.getElementById('admin-pill-list'); if(adminPills.length === 0) { list.innerHTML = '<span style="color:var(--sub);">ยังไม่มียาในระบบ</span>'; return; } 
+            const list = document.getElementById('admin-pill-list'); if(adminPills.length === 0) { list.innerHTML = '<span style="color:var(--text-sub);">ยังไม่มียาในระบบ</span>'; return; } 
             list.innerHTML = adminPills.map((p, i) => {
                 let txt = []; if(p.m) txt.push("เช้า"); if(p.n) txt.push("เที่ยง"); if(p.e) txt.push("เย็น"); if(p.b) txt.push("นอน");
-                let warning = (p.qty <= 5) ? `<span style="color:var(--danger); font-size:0.8rem; display:block;"><i class="fa-solid fa-triangle-exclamation"></i> ใกล้หมด! เหลือ ${p.qty} เม็ด</span>` : `<span style="color:var(--success); font-size:0.8rem; display:block;">เหลือ ${p.qty} เม็ด</span>`;
-                return `<div class="list-item"><div><span style="color: ${p.taken ? 'var(--success)' : 'white'}; font-weight:600; font-size:1.1rem;">${p.taken ? '✔️' : '⏳'} ${p.name}</span>${warning}<span style="font-size:0.8rem; color:var(--primary);">${txt.join(', ')}</span></div><button class="btn" style="background:rgba(239,68,68,0.2); padding: 12px;" onclick="removePill(${i})"><i class="fa-solid fa-trash" style="color:var(--danger);"></i></button></div>`;
+                let warning = (p.qty <= 5) ? `<span style="color:var(--danger); font-size:0.8rem; display:block;"><i class="fa-solid fa-triangle-exclamation"></i> เหลือ ${p.qty} เม็ด</span>` : `<span style="color:var(--success); font-size:0.8rem; display:block;">เหลือ ${p.qty} เม็ด</span>`;
+                let btnPhoto = p.photoStr ? `<button class="btn" style="background:var(--primary); padding:10px; margin:0; width:auto;" onclick="viewPillPhoto('${p.photoStr}')"><i class="fa-regular fa-image"></i></button>` : '';
+                return `<div class="list-item"><div><span style="color: ${p.taken ? 'var(--success)' : 'var(--text-main)'}; font-weight:bold;">${p.taken ? '✔️' : '⏳'} ${p.name}</span>${warning}<span style="font-size:0.8rem; color:var(--text-sub);">${txt.join(', ')}</span></div><div style="display:flex; gap:5px;">${btnPhoto}<button class="btn" style="background:rgba(239,68,68,0.2); padding: 10px; margin:0; width:auto;" onclick="removePill(${i})"><i class="fa-solid fa-trash" style="color:var(--danger);"></i></button></div></div>`;
             }).join(''); 
         }
-        function addPill() { 
-            vibrate(); const name = document.getElementById('new-pill').value; const qty = document.getElementById('new-pill-qty').value;
-            const m = document.getElementById('chk-m').checked, n = document.getElementById('chk-n').checked, e = document.getElementById('chk-e').checked, b = document.getElementById('chk-b').checked;
-            if(!name || !qty || (!m && !n && !e && !b)) return showToast("ใส่ชื่อ จำนวนยา และเวลาอย่างน้อย 1 มื้อ", "error"); 
-            adminPills.push({ name, m, n, e, b, taken: false, qty: parseInt(qty) }); localStorage.setItem('adminPills', JSON.stringify(adminPills)); document.getElementById('new-pill').value = ""; document.getElementById('new-pill-qty').value = ""; renderAdminPills(); 
-        }
+        function addPill() { vibrate(); const name = document.getElementById('new-pill').value; const qty = document.getElementById('new-pill-qty').value; const m = document.getElementById('chk-m').checked, n = document.getElementById('chk-n').checked, e = document.getElementById('chk-e').checked, b = document.getElementById('chk-b').checked; if(!name || !qty || (!m && !n && !e && !b)) return showToast("ใส่ให้ครบ", "error"); adminPills.push({ name, m, n, e, b, taken: false, qty: parseInt(qty) }); localStorage.setItem('adminPills', JSON.stringify(adminPills)); document.getElementById('new-pill').value = ""; document.getElementById('new-pill-qty').value = ""; renderAdminPills(); }
         function removePill(i) { vibrate(); adminPills.splice(i, 1); localStorage.setItem('adminPills', JSON.stringify(adminPills)); renderAdminPills(); }
-        function resetPillStatus() { customConfirm("รีเซ็ตเริ่มวันใหม่?", () => { adminPills.forEach(p => p.taken = false); localStorage.setItem('adminPills', JSON.stringify(adminPills)); renderAdminPills(); syncPillsToDevice(); showToast("รีเซ็ตเริ่มวันใหม่แล้ว", "success"); addLog("รีเซ็ตตารางยา"); }); }
-        function syncPillsToDevice() { vibrate(); client.publish(`familycare/${TARGET_ID}/command/pills_update`, JSON.stringify(adminPills), { retain: true, qos:1 }); saveToCloud({ action: "updatePills", system_id: TARGET_ID, pills: JSON.stringify(adminPills) }); showToast("ส่งตารางยาสำเร็จ", "success"); }
+        function resetPillStatus() { customConfirm("รีเซ็ตเริ่มวันใหม่?", () => { adminPills.forEach(p => {p.taken = false; delete p.photoStr;}); localStorage.setItem('adminPills', JSON.stringify(adminPills)); renderAdminPills(); syncPillsToDevice(); showToast("รีเซ็ตสำเร็จ", "success"); }); }
+        function syncPillsToDevice() { vibrate(); client.publish(`familycare/${TARGET_ID}/command/pills_update`, JSON.stringify(adminPills), { retain: true, qos:0 }); saveToCloud({ action: "updatePills", system_id: TARGET_ID, pills: JSON.stringify(adminPills) }); showToast("ส่งตารางยาสำเร็จ", "success"); }
 
-        function renderAppoints() {
-            const list = document.getElementById('admin-appoint-list'); if(adminAppoints.length === 0) { list.innerHTML = ''; return; }
-            list.innerHTML = adminAppoints.map((a, i) => `<div class="list-item"><div><span style="color:var(--primary); font-weight:bold;">${a.date}</span><br><span>${a.text}</span></div><button class="btn" style="background:rgba(239,68,68,0.2); padding: 10px;" onclick="removeAppoint(${i})"><i class="fa-solid fa-trash" style="color:var(--danger);"></i></button></div>`).join('');
-        }
-        function addAppoint() {
-            vibrate(); const date = document.getElementById('new-appoint-date').value, text = document.getElementById('new-appoint-text').value;
-            if(!date || !text) return showToast("ใส่วันที่และรายละเอียดให้ครบ", "error");
-            adminAppoints.push({date, text}); localStorage.setItem('adminAppoints', JSON.stringify(adminAppoints)); document.getElementById('new-appoint-text').value = ""; renderAppoints();
-        }
+        function checkCustomTime() { document.getElementById('new-appoint-time-custom').style.display = document.getElementById('new-appoint-time').value === 'other' ? 'block' : 'none'; }
+        function renderAppoints() { const list = document.getElementById('admin-appoint-list'); if(adminAppoints.length === 0) { list.innerHTML = ''; return; } list.innerHTML = adminAppoints.map((a, i) => `<div class="list-item"><div><span style="color:var(--primary); font-weight:bold;">${a.date}</span> <span style="color:var(--warning); font-size:0.9rem;">${a.time}</span><br><span style="color:var(--text-main);">${a.text}</span></div><button class="btn" style="background:rgba(239,68,68,0.2); padding: 10px; margin:0; width:auto;" onclick="removeAppoint(${i})"><i class="fa-solid fa-trash" style="color:var(--danger);"></i></button></div>`).join(''); }
+        function addAppoint() { vibrate(); const date = document.getElementById('new-appoint-date').value, text = document.getElementById('new-appoint-text').value; let time = document.getElementById('new-appoint-time').value; if(time === 'other') time = document.getElementById('new-appoint-time-custom').value; if(!date || !text || !time) return showToast("ใส่ข้อมูลให้ครบ", "error"); adminAppoints.push({date, time, text}); localStorage.setItem('adminAppoints', JSON.stringify(adminAppoints)); document.getElementById('new-appoint-text').value = ""; renderAppoints(); }
         function removeAppoint(i) { vibrate(); adminAppoints.splice(i, 1); localStorage.setItem('adminAppoints', JSON.stringify(adminAppoints)); renderAppoints(); }
-        function syncAppointToDevice() { vibrate(); client.publish(`familycare/${TARGET_ID}/command/appoint`, JSON.stringify(adminAppoints), { retain: true, qos:1 }); saveToCloud({ action: "updateAppoint", system_id: TARGET_ID, appoint: JSON.stringify(adminAppoints) }); showToast("ส่งตารางนัดสำเร็จ", "success"); }
+        function syncAppointToDevice() { vibrate(); client.publish(`familycare/${TARGET_ID}/command/appoint`, JSON.stringify(adminAppoints), { retain: true, qos:0 }); saveToCloud({ action: "updateAppoint", system_id: TARGET_ID, appoint: JSON.stringify(adminAppoints) }); showToast("ส่งตารางนัดสำเร็จ", "success"); }
 
-        function handleImageUpload(event) {
-            const file = event.target.files[0]; if(!file) return; showToast("กำลังประมวลผล...", "info");
-            const reader = new FileReader(); reader.onload = (e) => {
-                const img = new Image(); img.onload = () => {
-                    const canvas = document.createElement('canvas'); const MAX = 800; let w = img.width, h = img.height;
-                    if (w > MAX) { h *= MAX / w; w = MAX; } canvas.width = w; canvas.height = h;
-                    const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, w, h);
-                    client.publish(`familycare/${TARGET_ID}/command/photo`, canvas.toDataURL('image/jpeg', 0.6), { retain: true, qos:0 }); showToast("ส่งรูปขึ้นจอสำเร็จ!", "success"); addLog("อัปโหลดรูปภาพ");
-                }; img.src = e.target.result;
-            }; reader.readAsDataURL(file);
-        }
-        function sendData(type, isRetain) { vibrate(); const el = document.getElementById(`input-${type}`); const val = el.value; if(!val) return; client.publish(`familycare/${TARGET_ID}/command/${type}`, val, { retain: isRetain, qos:1 }); if(type === 'appoint') saveToCloud({ action: "updateAppoint", system_id: TARGET_ID, appoint: val }); addLog(`ส่งคำสั่ง: ${type}`); el.value = ""; showToast("ส่งสำเร็จ!", "success"); }
+        function handleImageUpload(event) { const file = event.target.files[0]; if(!file) return; showToast("กำลังประมวลผล...", "info"); const reader = new FileReader(); reader.onload = (e) => { const img = new Image(); img.onload = () => { const canvas = document.createElement('canvas'); const MAX = 800; let w = img.width, h = img.height; if (w > MAX) { h *= MAX / w; w = MAX; } canvas.width = w; canvas.height = h; const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, w, h); client.publish(`familycare/${TARGET_ID}/command/photo`, canvas.toDataURL('image/jpeg', 0.6), { retain: true, qos:0 }); showToast("ส่งรูปสำเร็จ!", "success"); }; img.src = e.target.result; }; reader.readAsDataURL(file); }
+        function sendData(type, isRetain) { vibrate(); const el = document.getElementById(`input-${type}`); const val = el.value; if(!val) return; client.publish(`familycare/${TARGET_ID}/command/${type}`, val, { retain: isRetain, qos:0 }); if(type === 'appoint') saveToCloud({ action: "updateAppoint", system_id: TARGET_ID, appoint: val }); el.value = ""; showToast("ส่งสำเร็จ!", "success"); }
 
-        function findMyDevice() { vibrate(); client.publish(`familycare/${TARGET_ID}/command/find_device`, "start", {qos:1}); showToast("สั่งค้นหาเครื่องแล้ว", "success"); addLog(`ค้นหาเครื่องคุณตา`); }
+        function findMyDevice() { vibrate(); client.publish(`familycare/${TARGET_ID}/command/find_device`, "start", {qos:0}); showToast("สั่งค้นหาเครื่องแล้ว", "success"); }
+        function startVideoCall() { vibrate(); const roomPass = Math.random().toString(36).substring(7); client.publish(`familycare/${TARGET_ID}/command/video`, "start_" + roomPass, {qos:0}); document.getElementById('video-modal').style.display = 'flex'; jitsiApi = new JitsiMeetExternalAPI("meet.jit.si", { roomName: "Room_" + TARGET_ID + "_" + roomPass, parentNode: document.getElementById('jitsi-container'), width: "100%", height: "100%" }); }
+        function stopVideoCall() { client.publish(`familycare/${TARGET_ID}/command/video`, "stop", {qos:0}); if(jitsiApi) jitsiApi.dispose(); document.getElementById('video-modal').style.display = 'none'; }
+        function updateGeofence() { vibrate(); geoRadius = parseInt(document.getElementById('geo-radius').value); localStorage.setItem('geoRadius', geoRadius); if(geoCircle) geoCircle.setRadius(geoRadius); let settings = JSON.stringify({geoRadius: geoRadius}); saveToCloud({action: "updateSettings", system_id: TARGET_ID, settings: settings}); client.publish(`familycare/${TARGET_ID}/command/settings`, settings, {qos:0}); showToast(`ตั้งรัศมี ${geoRadius} ม.`, "success"); }
         
-        function startVideoCall() { 
-            vibrate(); const roomPass = Math.random().toString(36).substring(7);
-            client.publish(`familycare/${TARGET_ID}/command/video`, "start_" + roomPass, {qos:1}); 
-            document.getElementById('video-modal').style.display = 'flex'; 
-            jitsiApi = new JitsiMeetExternalAPI("meet.jit.si", { roomName: "Room_" + TARGET_ID + "_" + roomPass, parentNode: document.getElementById('jitsi-container'), width: "100%", height: "100%" }); 
-            addLog("เปิดวิดีโอคอลฉุกเฉิน");
-        }
-        function stopVideoCall() { client.publish(`familycare/${TARGET_ID}/command/video`, "stop", {qos:1}); if(jitsiApi) jitsiApi.dispose(); document.getElementById('video-modal').style.display = 'none'; }
-
-        function updateGeofence() { 
-            vibrate(); geoRadius = parseInt(document.getElementById('geo-radius').value); localStorage.setItem('geoRadius', geoRadius); 
-            if(geoCircle) geoCircle.setRadius(geoRadius); 
-            let settings = JSON.stringify({geoRadius: geoRadius});
-            saveToCloud({action: "updateSettings", system_id: TARGET_ID, settings: settings});
-            client.publish(`familycare/${TARGET_ID}/command/settings`, settings, {qos:1});
-            showToast(`ตั้งรัศมีเป็น ${geoRadius} ม.`, "success"); 
-        }
-        
-        function processLocation(lat, lng) { initMap(lat, lng); const R = 6371e3; const a = Math.sin((lat-homeLat)*Math.PI/360)**2 + Math.cos(homeLat*Math.PI/180)*Math.cos(lat*Math.PI/180)*Math.sin((lng-homeLng)*Math.PI/360)**2; if(R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))) > geoRadius) { document.getElementById('geofence-alert').style.display = 'block'; new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg').play(); addLog(`⚠️ ออกนอกพื้นที่ปลอดภัย!`); notifyUser("แจ้งเตือน Geofence", `${myTitle} ออกนอกพื้นที่ปลอดภัย!`);} }
+        function processLocation(lat, lng) { initMap(lat, lng); const R = 6371e3; const a = Math.sin((lat-homeLat)*Math.PI/360)**2 + Math.cos(homeLat*Math.PI/180)*Math.cos(lat*Math.PI/180)*Math.sin((lng-homeLng)*Math.PI/360)**2; if(R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))) > geoRadius) { document.getElementById('geofence-alert').style.display = 'block'; new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg').play(); } }
         function initMap(lat, lng) { if (!map) { map = L.map('map').setView([homeLat, homeLng], 15); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); geoCircle = L.circle([homeLat, homeLng], { color: 'green', fillColor: '#10B981', fillOpacity: 0.2, radius: geoRadius }).addTo(map); setTimeout(() => map.invalidateSize(), 500); } if(lat && lng) { map.setView([lat, lng], 16); if (marker) map.removeLayer(marker); marker = L.marker([lat, lng]).addTo(map).bindPopup("ตำแหน่งปัจจุบัน").openPopup(); } }
     </script>
 </body>
