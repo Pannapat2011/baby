@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Family App (Ultimate Edition)</title>
+    <title>Family App (Ultimate Fixed)</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
@@ -16,7 +16,8 @@
         .glass { background: var(--card); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         
         .auth-container { max-width: 400px; margin: 10vh auto; padding: 30px; text-align: center; }
-        input, select { width: 100%; padding: 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; margin-bottom: 12px; font-size: 1rem;}
+        input, select, textarea { width: 100%; padding: 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; margin-bottom: 12px; font-size: 1rem;}
+        input:focus { border-color: var(--primary); }
         .btn { padding: 15px; border-radius: 16px; border: none; font-weight: bold; cursor: pointer; color: white; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width:100%; margin-bottom: 10px; transition: 0.2s;}
         .btn:active { transform: scale(0.95); }
         #reader { width: 100%; border-radius: 15px; overflow: hidden; margin-top: 15px; display: none; }
@@ -36,6 +37,7 @@
         
         .toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; width: 90%; max-width:400px; display:flex; flex-direction:column; gap:10px;}
         .toast { background: rgba(0,0,0,0.9); color: white; padding: 15px 20px; border-radius: 20px; text-align:center; animation: slideDown 0.3s forwards;}
+        .toast.success { border-left: 5px solid var(--success); } .toast.error { border-left: 5px solid var(--danger); }
         @keyframes slideDown { from { transform: translateY(-40px); } to { transform: translateY(0); } }
 
         .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; padding:20px; backdrop-filter: blur(5px);}
@@ -44,14 +46,21 @@
         .upload-btn-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; }
         .upload-btn-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; height: 100%;}
 
-        /* Call Modal */
         #call-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; flex-direction: column; align-items: center; justify-content: center; text-align: center;}
         .call-avatar { width: 120px; height: 120px; border-radius: 50%; background: var(--primary-grad); display: flex; align-items: center; justify-content: center; font-size: 4rem; margin-bottom: 20px; animation: pulseCall 1.5s infinite; }
         @keyframes pulseCall { 0% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7); } 100% { box-shadow: 0 0 0 30px rgba(14, 165, 233, 0); } }
 
-        /* Snapshot Modal */
         #snapshot-modal .modal { background: linear-gradient(180deg, #0F172A 0%, #1E293B 100%); color: white; border: 2px solid var(--primary); text-align: center; }
         .snapshot-item { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: bold;}
+
+        /* Health Form Controls */
+        .health-row { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 12px 20px; border-radius: 16px; margin-bottom: 10px;}
+        .qty-controls { display: flex; align-items: center; gap: 15px; }
+        .qty-btn { width: 35px; height: 35px; border-radius: 50%; border: none; background: rgba(255,255,255,0.2); font-size: 1.2rem; color: white; cursor:pointer;}
+        .val-disp { width: 40px; text-align: center; font-size: 1.2rem; color: var(--primary); }
+        .symp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;}
+        .symp-btn { padding: 8px 5px; border-radius: 8px; border: none; background: rgba(255,255,255,0.1); color: white; font-size:0.8rem; cursor:pointer;}
+        .symp-btn.active.l0 { background: var(--success); } .symp-btn.active.l1 { background: var(--primary); } .symp-btn.active.l2 { background: var(--warning); } .symp-btn.active.l3 { background: var(--danger); }
     </style>
 </head>
 <body>
@@ -63,9 +72,9 @@
             <h2 style="margin-bottom: 20px;">Family Care App</h2>
             <div id="login-form">
                 <input type="text" id="login-id" placeholder="รหัสเครื่องผู้สูงอายุ (ELDER_XXXX)">
-                <input type="password" id="login-pass" placeholder="รหัสผ่าน">
+                <input type="password" id="login-pass" placeholder="รหัสผ่านที่ได้รับจากแอดมิน">
                 <button class="btn" style="background: var(--success);" onclick="login()">เข้าสู่ระบบ</button>
-                <button class="btn" style="background: rgba(255,255,255,0.1);" onclick="startScanner()"><i class="fa-solid fa-qrcode"></i> สแกน QR</button>
+                <button class="btn" style="background: rgba(255,255,255,0.1);" onclick="startScanner()"><i class="fa-solid fa-qrcode"></i> สแกน QR Code</button>
                 <div id="reader"></div>
             </div>
         </div>
@@ -75,8 +84,35 @@
     <div id="call-modal">
         <div class="call-avatar"><i class="fa-solid fa-phone"></i></div>
         <h2 id="call-status" style="color:white; margin-bottom:10px;">กำลังโทร...</h2>
-        <p style="color:var(--text-sub); margin-bottom: 30px;">รอผู้สูงอายุรับสาย</p>
+        <p style="color:var(--text-sub); margin-bottom: 30px;">รอผู้สูงอายุรับสาย (ถ้าไม่รับจะเปิดไมค์อัตโนมัติ)</p>
         <button class="btn" style="background: var(--danger); width: 80px; height: 80px; border-radius: 50%; font-size: 2rem;" onclick="endCall()"><i class="fa-solid fa-phone-slash"></i></button>
+    </div>
+
+    <div id="health-input-modal" class="overlay">
+        <div class="modal">
+            <h2 style="color: var(--success); margin-bottom: 20px;"><i class="fa-solid fa-stethoscope"></i> บันทึกสุขภาพแทนผู้สูงอายุ</h2>
+            <div class="health-row"><span>นอน (ชม.)</span><div class="qty-controls"><button class="qty-btn" onclick="adj('s', -1)">-</button><span class="val-disp" id="v-s">8</span><button class="qty-btn" onclick="adj('s', 1)">+</button></div></div>
+            
+            <div class="health-row"><span><i class="fa-solid fa-droplet" style="color:var(--primary);"></i> ปัสสาวะ (ครั้ง)</span><div class="qty-controls"><button class="qty-btn" onclick="adj('u', -1)">-</button><span class="val-disp" id="v-u">3</span><button class="qty-btn" onclick="adj('u', 1)">+</button></div></div>
+            <div class="health-row"><span><i class="fa-solid fa-poop" style="color:#8b5a2b;"></i> อุจจาระ (ครั้ง)</span><div class="qty-controls"><button class="qty-btn" onclick="adj('f', -1)">-</button><span class="val-disp" id="v-f">1</span><button class="qty-btn" onclick="adj('f', 1)">+</button></div></div>
+            
+            <div class="health-row"><span>ชีพจร (HR)</span><div class="qty-controls"><button class="qty-btn" onclick="adj('hr', -5)">-</button><span class="val-disp" id="v-hr">80</span><button class="qty-btn" onclick="adj('hr', 5)">+</button></div></div>
+            <div class="health-row"><span>ออกซิเจน (O2)</span><div class="qty-controls"><button class="qty-btn" onclick="adj('o2', -1)">-</button><span class="val-disp" id="v-o2">98</span><button class="qty-btn" onclick="adj('o2', 1)">+</button></div></div>
+            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 16px; margin-bottom: 10px;">
+                <span>ความดันโลหิต (SYS/DIA)</span>
+                <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-top:10px;">
+                    <div class="qty-controls"><button class="qty-btn" onclick="adj('sys', -5)">-</button><span class="val-disp" id="v-sys">120</span><button class="qty-btn" onclick="adj('sys', 5)">+</button></div><span style="font-size:2rem; font-weight:100; color:white;">/</span>
+                    <div class="qty-controls"><button class="qty-btn" onclick="adj('dia', -5)">-</button><span class="val-disp" id="v-dia">80</span><button class="qty-btn" onclick="adj('dia', 5)">+</button></div>
+                </div>
+            </div>
+            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 16px;">
+                <h3 style="color:var(--warning); font-size:1rem; margin-bottom:10px;">อาการเจ็บป่วย</h3>
+                <div style="text-align:left; font-size:0.9rem;">ปวดหัว</div><div class="symp-grid" id="g-head"><button class="symp-btn active l0" onclick="setSymp('head',0)">ไม่มี</button><button class="symp-btn" onclick="setSymp('head',1)">น้อย</button><button class="symp-btn" onclick="setSymp('head',2)">กลาง</button><button class="symp-btn" onclick="setSymp('head',3)">มาก</button></div>
+                <div style="text-align:left; font-size:0.9rem; margin-top:10px;">ปวดเมื่อย</div><div class="symp-grid" id="g-body"><button class="symp-btn active l0" onclick="setSymp('body',0)">ไม่มี</button><button class="symp-btn" onclick="setSymp('body',1)">น้อย</button><button class="symp-btn" onclick="setSymp('body',2)">กลาง</button><button class="symp-btn" onclick="setSymp('body',3)">มาก</button></div>
+            </div>
+            <button class="btn" style="background: var(--success); margin-top:20px;" onclick="submitHealth()">บันทึกข้อมูลสุขภาพ</button>
+            <button class="btn" style="background: transparent; border: 1px solid rgba(255,255,255,0.2);" onclick="document.getElementById('health-input-modal').style.display='none'">ยกเลิก</button>
+        </div>
     </div>
 
     <div id="snapshot-modal" class="overlay">
@@ -112,7 +148,7 @@
     <div id="main-dashboard" class="wrapper">
         <div class="glass" style="display: flex; justify-content: space-between; align-items: center; padding: 20px;">
             <div><i class="fa-solid fa-link" style="color:var(--primary);"></i> ดูแล: <b id="display-target-id" style="color: var(--primary);"></b></div>
-            <button class="btn" style="background: rgba(255,255,255,0.1); width:auto; margin:0; padding:10px;" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ</button>
+            <button class="btn" style="background: rgba(255,255,255,0.1); width:auto; margin:0; padding:10px;" onclick="logout()"><i class="fa-solid fa-power-off" style="color:var(--danger);"></i> ออกจากระบบ</button>
         </div>
 
         <div id="sos-alert" style="display:none; background: var(--danger-grad); padding:20px; border-radius:24px; text-align:center;">
@@ -148,7 +184,6 @@
             </div>
 
             <div style="display:flex; flex-direction:column; gap:20px;">
-                
                 <div class="card glass" style="border-color: var(--primary);">
                     <div class="card-title">
                         <span style="color:var(--primary);"><i class="fa-solid fa-user-doctor"></i> ประวัติส่วนตัว & กู้ภัย</span>
@@ -161,7 +196,10 @@
                         <input type="text" id="rescue-name-input" placeholder="ชื่อกู้ภัย (เช่น สว่างประทีป)">
                         <input type="text" id="rescue-phone-input" placeholder="เบอร์กู้ภัย (1669)">
                     </div>
-                    <button class="btn" style="background: var(--primary); margin:10px 0 0 0;" onclick="saveMedicalProfile()"><i class="fa-solid fa-floppy-disk"></i> เซฟ & ซิงค์ขึ้นจอคนแก่</button>
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <button class="btn" style="background: var(--primary); margin:0; flex:2;" onclick="saveMedicalProfile()"><i class="fa-solid fa-floppy-disk"></i> เซฟประวัติ</button>
+                        <button class="btn" style="background: var(--danger); margin:0; flex:1;" onclick="document.getElementById('health-input-modal').style.display='flex'"><i class="fa-solid fa-plus"></i> ลงสุขภาพ</button>
+                    </div>
                 </div>
 
                 <div class="card glass">
@@ -199,10 +237,10 @@
                     <div class="card-title"><i class="fa-solid fa-gamepad"></i> คุมจอผู้สูงอายุ</div>
                     <div style="display:flex; gap:10px; margin-bottom:15px;">
                         <div class="upload-btn-wrapper" style="flex:1;">
-                            <button class="btn" style="background: #D946EF; margin:0;"><i class="fa-solid fa-image"></i> เปลี่ยนรูปกรอบรูป</button>
+                            <button class="btn" style="background: #D946EF; margin:0;"><i class="fa-solid fa-image"></i> อัปโหลดรูปใส่กรอบ</button>
                             <input type="file" accept="image/*" onchange="handleImageUpload(event)">
                         </div>
-                        <button class="btn" style="background: var(--warning); color:black; margin:0; flex:1;" onclick="findMyDevice()"><i class="fa-solid fa-bell-on"></i> ส่งเสียงค้นหาเครื่อง</button>
+                        <button class="btn" style="background: var(--warning); color:black; margin:0; flex:1;" onclick="findMyDevice()"><i class="fa-solid fa-bell-on"></i> ส่งเสียงไซเรน</button>
                     </div>
                     <div style="display:flex; gap:10px;">
                         <input type="text" id="input-youtube" placeholder="วางลิงก์ YouTube" style="margin:0;">
@@ -216,7 +254,7 @@
 
     <script>
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzph3otQ0ERZxWxwb8t-GrJbDeuzz9K4zMUCl4DpacNNItpZXX5OgoRKKwqfymLLn6fAw/exec";
-        const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', { keepalive: 30 });
+        const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', { keepalive: 30, reconnectPeriod: 1000 });
         let TARGET_ID = localStorage.getItem('ELDER_TARGET_ID');
         let html5QrCode, onlineTimer, chartInstance;
         let adminPills = [], adminAppoints = [], logs = [], healthHistory = []; 
@@ -232,7 +270,6 @@
             }
         };
 
-        // 🟢 แก้บั๊ก Login ให้รีเฟรชหน้า 100%
         async function login() {
             const id = document.getElementById('login-id').value, pass = document.getElementById('login-pass').value;
             if(!id || !pass) return showToast('กรุณากรอกไอดีและรหัสผ่านให้ครบ');
@@ -291,7 +328,6 @@
             client.on('message', (topic, message) => {
                 const payload = message.toString(); const type = topic.split('/').pop();
 
-                // 🟢 Heartbeat (เช็คเน็ตหลุด)
                 if(type === 'heartbeat') { 
                     const badge = document.getElementById('online-status'); 
                     badge.innerText = "🟢 ออนไลน์"; badge.style.background = "var(--success)";
@@ -302,12 +338,12 @@
                 else if(type === 'pills_update') { adminPills = JSON.parse(payload); localStorage.setItem('adminPills_' + TARGET_ID, payload); renderAdminPills(); }
                 else if(type === 'water') { document.getElementById('stat-water').innerText = payload + " แก้ว"; localStorage.setItem('waterCount_' + TARGET_ID, payload); addLog(`ดื่มน้ำ (${payload} แก้ว)`); }
                 else if(type === 'mood') { document.getElementById('stat-mood').innerText = payload; addLog(`อารมณ์: ${payload}`); }
-                else if(type === 'pill_taken') { showToast(`ทาน ${payload} แล้ว`); addLog(`ทานยา: ${payload}`); }
+                else if(type === 'pill_taken') { showToast(`ทาน ${payload} แล้ว`, "success"); addLog(`ทานยา: ${payload}`); }
                 else if(type === 'pill_photo') { const data = JSON.parse(payload); document.getElementById('pill-photo-name').innerText = data.name; document.getElementById('pill-photo-img').src = data.img; document.getElementById('pill-photo-modal').style.display = 'flex'; addLog(`ส่งรูปยืนยันยา: ${data.name}`); }
                 else if(type === 'health') { 
                     const data = JSON.parse(payload); healthHistory.push(data); if(healthHistory.length > 30) healthHistory.shift(); 
                     localStorage.setItem('healthHistory_' + TARGET_ID, JSON.stringify(healthHistory));
-                    showToast(`ได้รับข้อมูลสุขภาพล่าสุด!`); addLog("อัปเดตข้อมูลสุขภาพ"); 
+                    showToast(`ได้รับข้อมูลสุขภาพล่าสุด!`, "success"); addLog("อัปเดตข้อมูลสุขภาพ"); 
                     if(document.getElementById('report-modal').style.display === 'flex') updateHealthChart();
                 }
                 else if(type === 'sos') { 
@@ -316,12 +352,30 @@
                     if(data.error === "INACTIVITY") { addLog(`🚨 นิ่งนานผิดปกติ!`); document.getElementById('sos-alert').querySelector('h2').innerText = "🚨 ผู้สูงอายุนิ่งนานเกิน 6 ชม.!"; } 
                     else { addLog(`🚨 กด SOS!`); document.getElementById('sos-alert').querySelector('h2').innerText = "🚨 ฉุกเฉิน! ผู้สูงอายุกด SOS!";}
                 }
-                else if(topic.includes('webrtc')) handleWebRTCSignal(type, payload); 
+                else if(topic.includes('webrtc')) handleWebRTCSignal(type, payload, topic); 
             });
             client.publish(`familycare/${TARGET_ID}/command/request_sync`, "true");
         }
 
-        // 🟢 Daily Snapshot (ฟีเจอร์แคปจอลงไลน์)
+        // 🟢 ฟังก์ชันบันทึกสุขภาพ (JS ฝั่งหลาน)
+        let hState = { s: 8, u: 3, f: 1, hr: 80, o2: 98, sys: 120, dia: 80, symp: { head: 0, stom: 0, tooth: 0, body: 0 } };
+        function adj(key, val) { hState[key] += val; if(hState[key] < 0) hState[key] = 0; document.getElementById('v-'+key).innerText = hState[key]; }
+        function setSymp(type, level) { hState.symp[type] = level; const btns = document.getElementById('g-'+type).children; for(let i=0; i<btns.length; i++) { btns[i].className = `symp-btn ${i===level ? 'active l'+i : ''}`; } }
+        
+        function submitHealth() {
+            let res = { s: hState.s, u: hState.u, f: hState.f, hr: hState.hr, o2: hState.o2, bp: `${hState.sys}/${hState.dia}`, symp: hState.symp, time: new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) };
+            client.publish(`familycare/${TARGET_ID}/status/health`, JSON.stringify(res), {qos:0}); 
+            saveToCloud({ action: "updateHealth", system_id: TARGET_ID, health: JSON.stringify(res) });
+            
+            healthHistory.push(res); if(healthHistory.length > 30) healthHistory.shift(); 
+            localStorage.setItem('healthHistory_' + TARGET_ID, JSON.stringify(healthHistory));
+            
+            document.getElementById('health-input-modal').style.display = 'none'; 
+            showToast("บันทึกข้อมูลสุขภาพให้คุณตาแล้ว!", "success");
+            
+            if(document.getElementById('report-modal').style.display === 'flex') updateHealthChart();
+        }
+
         function openSnapshot() {
             const dateStr = new Date().toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             document.getElementById('snap-date').innerText = dateStr;
@@ -333,7 +387,6 @@
             document.getElementById('snapshot-modal').style.display = 'flex';
         }
 
-        // 📊 Chart.js
         function showHealthReport() { document.getElementById('report-modal').style.display = 'flex'; updateHealthChart(); }
         function updateHealthChart() {
             if(healthHistory.length === 0) return;
@@ -343,7 +396,7 @@
             chartInstance = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [ { label: 'SYS', data: sysData, borderColor: '#EF4444' }, { label: 'DIA', data: diaData, borderColor: '#F59E0B' }, { label: 'ชีพจร', data: hrData, borderColor: '#10B981' } ] }, options: { responsive: true } });
         }
 
-        // 📞 WebRTC
+        // WebRTC
         let peerConnection, localStream; const rtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
         async function startVoiceCall() {
             document.getElementById('call-modal').style.display = 'flex'; document.getElementById('call-status').innerText = "กำลังต่อสาย...";
@@ -351,14 +404,14 @@
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true }); peerConnection = new RTCPeerConnection(rtcConfig);
                 localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
                 peerConnection.ontrack = event => { document.getElementById('remote-audio').srcObject = event.streams[0]; document.getElementById('call-status').innerText = "กำลังคุยสาย 📞"; };
-                peerConnection.onicecandidate = event => { if (event.candidate) client.publish(`familycare/${TARGET_ID}/webrtc/candidate/family`, JSON.stringify(event.candidate)); };
+                peerConnection.onicecandidate = event => { if (event.candidate) client.publish(`familycare/${TARGET_ID}/webrtc/candidate_family`, JSON.stringify(event.candidate)); };
                 const offer = await peerConnection.createOffer(); await peerConnection.setLocalDescription(offer); client.publish(`familycare/${TARGET_ID}/webrtc/offer`, JSON.stringify(offer));
             } catch (err) { showToast("เปิดไมค์ไม่ได้", "error"); endCall(); }
         }
-        async function handleWebRTCSignal(type, payload) {
+        async function handleWebRTCSignal(type, payload, topic) {
             if(type === 'answer') { const answer = JSON.parse(payload); await peerConnection.setRemoteDescription(new RTCSessionDescription(answer)); } 
-            else if(type === 'candidate') { const candidate = JSON.parse(payload); if (peerConnection && peerConnection.remoteDescription) await peerConnection.addIceCandidate(new RTCIceCandidate(candidate)); }
-            else if(type === 'hangup') { endCallLocal(); showToast("อีกฝ่ายวางสายแล้ว"); }
+            else if(type === 'candidate_elderly') { const candidate = JSON.parse(payload); if (peerConnection && peerConnection.remoteDescription) await peerConnection.addIceCandidate(new RTCIceCandidate(candidate)); }
+            else if(type === 'hangup') { endCallLocal(); showToast("อีกฝ่ายวางสายแล้ว", "info"); }
         }
         function endCall() { client.publish(`familycare/${TARGET_ID}/webrtc/hangup`, "true"); endCallLocal(); }
         function endCallLocal() { document.getElementById('call-modal').style.display = 'none'; if (peerConnection) { peerConnection.close(); peerConnection = null; } if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; } }
@@ -366,22 +419,21 @@
         function addLog(msg) { const time = new Date().toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'}); logs.unshift({time, msg}); if(logs.length > 20) logs.pop(); localStorage.setItem('activityLogs_' + TARGET_ID, JSON.stringify(logs)); renderLogs(); }
         function renderLogs() { document.getElementById('activity-log').innerHTML = logs.map(l => `<div class="list-item" style="padding:10px;"><div style="color:var(--text-sub); width:60px;">${l.time}</div><div style="flex:1;">${l.msg}</div></div>`).join(''); }
         
-        // 🟢 ของเก่า: ยา และ นัดหมาย กลับมาครบ
         function renderAdminPills() { const list = document.getElementById('admin-pill-list'); if(adminPills.length === 0) return list.innerHTML = '<span style="color:var(--text-sub);">ไม่มีข้อมูล</span>'; list.innerHTML = adminPills.map((p, i) => { let warning = (p.qty <= 5) ? `<span style="color:var(--danger); font-size:0.8rem; display:block;">เหลือ ${p.qty} เม็ด</span>` : `<span style="color:var(--success); font-size:0.8rem; display:block;">เหลือ ${p.qty} เม็ด</span>`; return `<div class="list-item"><div><b style="color: ${p.taken ? 'var(--success)' : 'white'};">${p.taken ? '✔️' : '⏳'} ${p.name}</b><br>${warning}</div><button class="btn" style="background:rgba(239,68,68,0.2); width:auto; margin:0;" onclick="removePill(${i})"><i class="fa-solid fa-trash" style="color:var(--danger);"></i></button></div>`; }).join(''); }
         function addPill() { const name = document.getElementById('new-pill').value; const qty = parseInt(document.getElementById('new-pill-qty').value); const m = document.getElementById('chk-m').checked, n = document.getElementById('chk-n').checked, e = document.getElementById('chk-e').checked, b = document.getElementById('chk-b').checked; if(!name || isNaN(qty)) return; adminPills.push({ name, m, n, e, b, taken: false, qty }); localStorage.setItem('adminPills_' + TARGET_ID, JSON.stringify(adminPills)); renderAdminPills(); }
         function removePill(i) { adminPills.splice(i, 1); localStorage.setItem('adminPills_' + TARGET_ID, JSON.stringify(adminPills)); renderAdminPills(); }
         function resetPillStatus() { adminPills.forEach(p => p.taken = false); localStorage.setItem('adminPills_' + TARGET_ID, JSON.stringify(adminPills)); renderAdminPills(); syncPillsToDevice(); }
-        function syncPillsToDevice() { client.publish(`familycare/${TARGET_ID}/command/pills_update`, JSON.stringify(adminPills), { retain: true, qos:0 }); saveToCloud({ action: "updatePills", system_id: TARGET_ID, pills: JSON.stringify(adminPills) }); showToast("ส่งตารางยาสำเร็จ"); }
+        function syncPillsToDevice() { client.publish(`familycare/${TARGET_ID}/command/pills_update`, JSON.stringify(adminPills), { retain: true, qos:0 }); saveToCloud({ action: "updatePills", system_id: TARGET_ID, pills: JSON.stringify(adminPills) }); showToast("ส่งตารางยาสำเร็จ", "success"); }
 
         function renderAppoints() { const list = document.getElementById('admin-appoint-list'); if(adminAppoints.length === 0) return list.innerHTML = '<span style="color:var(--text-sub);">ไม่มีนัดหมาย</span>'; list.innerHTML = adminAppoints.map((a, i) => `<div class="list-item"><div style="width:100%;"><span style="color:var(--primary); font-weight:bold;">${a.date} | ${a.time}</span><br><b style="font-size:1.1rem;">${a.text}</b></div><button class="btn" style="background:rgba(239,68,68,0.2); width:auto; margin:0;" onclick="removeAppoint(${i})"><i class="fa-solid fa-trash" style="color:var(--danger);"></i></button></div>`).join(''); }
         function addAppoint() { const date = document.getElementById('new-appoint-date').value, text = document.getElementById('new-appoint-text').value, time = document.getElementById('new-appoint-time').value; if(!date || !text || !time) return showToast("ใส่ให้ครบ"); adminAppoints.push({date, time, text}); localStorage.setItem('adminAppoints_' + TARGET_ID, JSON.stringify(adminAppoints)); renderAppoints(); }
         function removeAppoint(i) { adminAppoints.splice(i, 1); localStorage.setItem('adminAppoints_' + TARGET_ID, JSON.stringify(adminAppoints)); renderAppoints(); }
-        function syncAppointToDevice() { client.publish(`familycare/${TARGET_ID}/command/appoint`, JSON.stringify(adminAppoints), { retain: true, qos:0 }); saveToCloud({ action: "updateAppoint", system_id: TARGET_ID, appoint: JSON.stringify(adminAppoints) }); showToast("ส่งตารางนัดสำเร็จ"); }
+        function syncAppointToDevice() { client.publish(`familycare/${TARGET_ID}/command/appoint`, JSON.stringify(adminAppoints), { retain: true, qos:0 }); saveToCloud({ action: "updateAppoint", system_id: TARGET_ID, appoint: JSON.stringify(adminAppoints) }); showToast("ส่งตารางนัดสำเร็จ", "success"); }
 
-        function findMyDevice() { client.publish(`familycare/${TARGET_ID}/command/find_device`, "start", {qos:0}); showToast("สั่งส่งเสียงที่เครื่องตาแล้ว"); }
+        function findMyDevice() { client.publish(`familycare/${TARGET_ID}/command/find_device`, "start", {qos:0}); showToast("สั่งส่งเสียงที่เครื่องตาแล้ว", "success"); }
         function ackSOS() { client.publish(`familycare/${TARGET_ID}/command/ack_sos`, "ลูกหลาน", {qos:0}); document.getElementById('sos-alert').style.display = 'none'; }
         function sendData(type, isRetain) { const el = document.getElementById(`input-${type}`); const val = el.value; if(!val) return; client.publish(`familycare/${TARGET_ID}/command/${type}`, val, { retain: isRetain, qos:0 }); el.value = ""; showToast("สั่งเปิดวิดีโอที่หน้าจอคนแก่สำเร็จ!"); }
-        function handleImageUpload(event) { const file = event.target.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = (e) => { const img = new Image(); img.onload = () => { const canvas = document.createElement('canvas'); const MAX = 800; let w = img.width, h = img.height; if (w > MAX) { h *= MAX / w; w = MAX; } canvas.width = w; canvas.height = h; const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, w, h); client.publish(`familycare/${TARGET_ID}/command/photo`, canvas.toDataURL('image/jpeg', 0.6), { retain: true, qos:0 }); showToast("ส่งรูปไปแสดงในกรอบรูปคนแก่แล้ว!"); }; img.src = e.target.result; }; reader.readAsDataURL(file); }
+        function handleImageUpload(event) { const file = event.target.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = (e) => { const img = new Image(); img.onload = () => { const canvas = document.createElement('canvas'); const MAX = 800; let w = img.width, h = img.height; if (w > MAX) { h *= MAX / w; w = MAX; } canvas.width = w; canvas.height = h; const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, w, h); client.publish(`familycare/${TARGET_ID}/command/photo`, canvas.toDataURL('image/jpeg', 0.6), { retain: true, qos:0 }); showToast("เปลี่ยนรูปกรอบรูปสำเร็จ!"); }; img.src = e.target.result; }; reader.readAsDataURL(file); }
         
         function startScanner() { document.getElementById('reader').style.display = "block"; html5QrCode = new Html5Qrcode("reader"); html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, (decodedText) => { html5QrCode.stop().then(() => { document.getElementById('reader').style.display = "none"; document.getElementById('login-id').value = decodedText; }); }, () => {}).catch(err => showToast("เปิดกล้องไม่ได้", "error")); }
     </script>
