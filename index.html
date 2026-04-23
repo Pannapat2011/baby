@@ -6,6 +6,10 @@
     <title>Family App (Ultimate Connected)</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.js"></script>
+
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -55,6 +59,10 @@
         #call-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; flex-direction: column; align-items: center; justify-content: center; text-align: center;}
         .call-avatar { width: 120px; height: 120px; border-radius: 50%; background: var(--primary-grad); display: flex; align-items: center; justify-content: center; font-size: 4rem; margin-bottom: 20px; animation: pulseCall 1.5s infinite; }
         @keyframes pulseCall { 0% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7); } 100% { box-shadow: 0 0 0 30px rgba(14, 165, 233, 0); } }
+
+        /* ปรับแต่งปุ่มซูมของ Croppie ให้สวยเข้ากับแอป */
+        .cr-slider { appearance: none; height: 8px; background: rgba(255,255,255,0.2); border-radius: 5px; outline: none; }
+        .cr-slider::-webkit-slider-thumb { appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--primary); cursor: pointer; }
     </style>
 </head>
 <body>
@@ -80,6 +88,17 @@
         <h2 id="call-status" style="color:white; margin-bottom:10px;">กำลังโทร...</h2>
         <p style="color:var(--text-sub); margin-bottom: 30px;">รอผู้สูงอายุรับสาย (ถ้าไม่รับจะเปิดไมค์อัตโนมัติ)</p>
         <button class="btn" style="background: var(--danger); width: 80px; height: 80px; border-radius: 50%; font-size: 2rem;" onclick="endCall()"><i class="fa-solid fa-phone-slash"></i></button>
+    </div>
+
+    <div id="crop-modal" class="overlay" style="z-index: 10001;">
+        <div class="modal" style="border: 2px solid var(--primary); padding: 20px;">
+            <h2 style="color:var(--primary); margin-bottom:15px;"><i class="fa-solid fa-crop-simple"></i> ขยับและซูมรูปภาพ</h2>
+            <div id="croppie-container" style="width: 100%; height: 280px; margin-bottom: 15px;"></div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn" style="background:rgba(255,255,255,0.1); color:white; flex:1; margin:0;" onclick="cancelCrop()"><i class="fa-solid fa-xmark"></i> ยกเลิก</button>
+                <button class="btn" style="background:var(--success); flex:1; margin:0;" onclick="confirmCrop()"><i class="fa-solid fa-check"></i> ตกลง</button>
+            </div>
+        </div>
     </div>
 
     <div id="health-input-modal" class="overlay">
@@ -248,6 +267,7 @@
         let TARGET_ID = localStorage.getItem('ELDER_TARGET_ID');
         let html5QrCode, onlineTimer, chartInstance;
         let adminPills = [], adminAppoints = [], logs = [], healthHistory = [], currentIdPhoto = ""; 
+        let croppieInstance = null; // ตัวแปรสำหรับระบบ ครอปรูป
 
         function showToast(msg) { let box = document.getElementById('toast-container'); let el = document.createElement('div'); el.className = `toast`; el.innerHTML = `<span>${msg}</span>`; box.appendChild(el); setTimeout(() => { el.remove(); }, 3000); }
         async function saveToCloud(payload) { const formData = new URLSearchParams(); formData.append('data', JSON.stringify(payload)); try { await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: formData }); } catch(e) {} }
@@ -265,7 +285,6 @@
             if(!id || !pass) return showToast('กรุณากรอกไอดีและรหัสผ่านให้ครบ');
             showToast('กำลังตรวจสอบ...');
             try { 
-                // บังคับทำลาย Cache
                 const res = await fetch(`${GAS_URL}?action=login&id=${id}&pass=${pass}&t=${new Date().getTime()}`); const text = await res.text();
                 if(text.includes("<!DOCTYPE html>")) return showToast('ระบบขัดข้อง โปรดลองใหม่');
                 const data = JSON.parse(text); 
@@ -289,7 +308,6 @@
 
         async function checkProfileCloud() {
             try {
-                // บังคับทำลาย Cache
                 const res = await fetch(`${GAS_URL}?action=read&id=${TARGET_ID}&t=${new Date().getTime()}`); const data = await res.json();
                 localStorage.setItem('elderProfile_' + TARGET_ID, JSON.stringify(data));
                 document.getElementById('prof-age').value = data.age || ""; document.getElementById('prof-blood').value = data.blood || ""; document.getElementById('prof-disease').value = data.disease || ""; document.getElementById('prof-allergy').value = data.allergy || ""; document.getElementById('rescue-name-input').value = data.rescue_name || ""; document.getElementById('rescue-phone-input').value = data.rescue_phone || "";
@@ -300,15 +318,52 @@
             } catch(e) {}
         }
 
+        // ================= ระบบครอปรูปภาพ (Croppie.js) =================
         function handleIdPhotoUpload(event) {
-            const file = event.target.files[0]; if(!file) return; const reader = new FileReader();
-            reader.onload = (e) => { const img = new Image(); img.onload = () => {
-                const canvas = document.createElement('canvas'); const MAX = 200; let w = img.width, h = img.height;
-                if(w > h) { if(w > MAX) { h *= MAX/w; w = MAX; } } else { if(h > MAX) { w *= MAX/h; h = MAX; } }
-                canvas.width = w; canvas.height = h; const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, w, h);
-                currentIdPhoto = canvas.toDataURL('image/jpeg', 0.6); document.getElementById('prof-id-photo').src = currentIdPhoto; showToast("ถ่ายรูปเสร็จแล้ว กดปุ่มเซฟด้วยนะ!");
-            }; img.src = e.target.result; }; reader.readAsDataURL(file);
+            const file = event.target.files[0]; if(!file) return; 
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('crop-modal').style.display = 'flex';
+                
+                // ถ้าระบบครอปเคยเปิดไว้ ให้ล้างค่าเก่าก่อน
+                if(croppieInstance) { croppieInstance.destroy(); }
+                
+                const el = document.getElementById('croppie-container');
+                croppieInstance = new Croppie(el, {
+                    viewport: { width: 180, height: 180, type: 'circle' },
+                    boundary: { width: '100%', height: 250 },
+                    showZoomer: true,
+                    enableExif: true,
+                    enableOrientation: true
+                });
+                
+                // เอารูปที่เลือกใส่เข้าไประบบครอป
+                croppieInstance.bind({ url: e.target.result });
+            }; 
+            reader.readAsDataURL(file);
+            event.target.value = ''; // เคลียร์ input เผื่อผู้ใช้เลือกรูปเดิมซ้ำ
         }
+
+        function confirmCrop() {
+            if(!croppieInstance) return;
+            
+            // ประมวลผลรูปที่ครอปแล้วให้ออกมาเป็น base64 ขนาด 200x200 px
+            croppieInstance.result({ type: 'base64', size: {width: 200, height: 200}, format: 'jpeg', circle: false }).then(function(base64) {
+                currentIdPhoto = base64; 
+                document.getElementById('prof-id-photo').src = currentIdPhoto; 
+                
+                document.getElementById('crop-modal').style.display = 'none';
+                if(croppieInstance) { croppieInstance.destroy(); croppieInstance = null; }
+                
+                showToast("ครอปรูปเสร็จแล้ว อย่าลืมกด 'เซฟประวัติ' เพื่ออัปเดตหน้าจอคุณตานะ!");
+            });
+        }
+
+        function cancelCrop() {
+            document.getElementById('crop-modal').style.display = 'none';
+            if(croppieInstance) { croppieInstance.destroy(); croppieInstance = null; }
+        }
+        // ==============================================================
 
         async function saveMedicalProfile() {
             const age = document.getElementById('prof-age').value, blood = document.getElementById('prof-blood').value, disease = document.getElementById('prof-disease').value, allergy = document.getElementById('prof-allergy').value, rName = document.getElementById('rescue-name-input').value, rPhone = document.getElementById('rescue-phone-input').value;
