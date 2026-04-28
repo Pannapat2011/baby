@@ -82,11 +82,11 @@
         </div>
     </div>
 
-    <audio id="remote-audio" autoplay></audio>
+    <audio id="remote-audio" autoplay playsinline></audio>
     <div id="call-modal">
         <div class="call-avatar"><i class="fa-solid fa-phone"></i></div>
         <h2 id="call-status" style="color:white; margin-bottom:10px;">กำลังโทร...</h2>
-        <p style="color:var(--text-sub); margin-bottom: 30px;">รอผู้สูงอายุรับสาย (ถ้าไม่รับจะเปิดไมค์อัตโนมัติ)</p>
+        <p style="color:var(--text-sub); margin-bottom: 30px;">ระบบจะดังขึ้น รอให้ผู้สูงอายุกดปุ่มสีเขียวเพื่อคุย</p>
         <button class="btn" style="background: var(--danger); width: 80px; height: 80px; border-radius: 50%; font-size: 2rem;" onclick="endCall()"><i class="fa-solid fa-phone-slash"></i></button>
     </div>
 
@@ -318,44 +318,28 @@
             } catch(e) {}
         }
 
-        // ================= ระบบครอปรูปภาพ (Croppie.js) =================
         function handleIdPhotoUpload(event) {
             const file = event.target.files[0]; if(!file) return; 
             const reader = new FileReader();
             reader.onload = (e) => {
                 document.getElementById('crop-modal').style.display = 'flex';
-                
-                // ถ้าระบบครอปเคยเปิดไว้ ให้ล้างค่าเก่าก่อน
                 if(croppieInstance) { croppieInstance.destroy(); }
-                
                 const el = document.getElementById('croppie-container');
-                croppieInstance = new Croppie(el, {
-                    viewport: { width: 180, height: 180, type: 'circle' },
-                    boundary: { width: '100%', height: 250 },
-                    showZoomer: true,
-                    enableExif: true,
-                    enableOrientation: true
-                });
-                
-                // เอารูปที่เลือกใส่เข้าไประบบครอป
+                croppieInstance = new Croppie(el, { viewport: { width: 180, height: 180, type: 'circle' }, boundary: { width: '100%', height: 250 }, showZoomer: true, enableExif: true, enableOrientation: true });
                 croppieInstance.bind({ url: e.target.result });
             }; 
             reader.readAsDataURL(file);
-            event.target.value = ''; // เคลียร์ input เผื่อผู้ใช้เลือกรูปเดิมซ้ำ
+            event.target.value = ''; 
         }
 
         function confirmCrop() {
             if(!croppieInstance) return;
-            
-            // ประมวลผลรูปที่ครอปแล้วให้ออกมาเป็น base64 ขนาด 200x200 px
             croppieInstance.result({ type: 'base64', size: {width: 200, height: 200}, format: 'jpeg', circle: false }).then(function(base64) {
                 currentIdPhoto = base64; 
                 document.getElementById('prof-id-photo').src = currentIdPhoto; 
-                
                 document.getElementById('crop-modal').style.display = 'none';
                 if(croppieInstance) { croppieInstance.destroy(); croppieInstance = null; }
-                
-                showToast("ครอปรูปเสร็จแล้ว อย่าลืมกด 'เซฟประวัติ' เพื่ออัปเดตหน้าจอคุณตานะ!");
+                showToast("ครอปรูปเสร็จแล้ว อย่าลืมกด 'เซฟประวัติ' นะ!");
             });
         }
 
@@ -363,7 +347,6 @@
             document.getElementById('crop-modal').style.display = 'none';
             if(croppieInstance) { croppieInstance.destroy(); croppieInstance = null; }
         }
-        // ==============================================================
 
         async function saveMedicalProfile() {
             const age = document.getElementById('prof-age').value, blood = document.getElementById('prof-blood').value, disease = document.getElementById('prof-disease').value, allergy = document.getElementById('prof-allergy').value, rName = document.getElementById('rescue-name-input').value, rPhone = document.getElementById('rescue-phone-input').value;
@@ -415,7 +398,7 @@
             client.publish(`familycare/${TARGET_ID}/command/request_sync`, "true");
         }
 
-        // 🟢 Health Form Logic (ฝั่งหลาน)
+        // 🟢 Health Form Logic
         let hState = { s: 8, u: 3, f: 1, hr: 80, o2: 98, sys: 120, dia: 80, symp: { head: 0, stom: 0, tooth: 0, body: 0 } };
         function adj(key, val) { hState[key] += val; if(hState[key] < 0) hState[key] = 0; document.getElementById('v-'+key).innerText = hState[key]; }
         function setSymp(type, level) { hState.symp[type] = level; const btns = document.getElementById('g-'+type).children; for(let i=0; i<btns.length; i++) { btns[i].className = `symp-btn ${i===level ? 'active l'+i : ''}`; } }
