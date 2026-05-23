@@ -54,6 +54,11 @@
         .symp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;}
         .symp-btn { padding: 8px 5px; border-radius: 8px; border: none; background: rgba(255,255,255,0.1); color: white; font-size:0.8rem; cursor:pointer;}
         .symp-btn.active.l0 { background: var(--success); } .symp-btn.active.l1 { background: var(--primary); } .symp-btn.active.l2 { background: var(--warning); } .symp-btn.active.l3 { background: var(--danger); }
+        
+        /* WebRTC Call UI */
+        #call-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; flex-direction: column; align-items: center; justify-content: center; text-align: center;}
+        .call-avatar { width: 120px; height: 120px; border-radius: 50%; background: var(--primary-grad); display: flex; align-items: center; justify-content: center; font-size: 4rem; margin-bottom: 20px; animation: pulseCall 1.5s infinite; }
+        @keyframes pulseCall { 0% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7); } 100% { box-shadow: 0 0 0 30px rgba(14, 165, 233, 0); } }
 
         /* ปรับแต่งปุ่มซูมของ Croppie ให้สวยเข้ากับแอป */
         .cr-slider { appearance: none; height: 8px; background: rgba(255,255,255,0.2); border-radius: 5px; outline: none; }
@@ -75,6 +80,14 @@
                 <div id="reader" style="width:100%; border-radius:15px; overflow:hidden; margin-top:15px; display:none;"></div>
             </div>
         </div>
+    </div>
+
+    <audio id="remote-audio" autoplay playsinline></audio>
+    <div id="call-modal">
+        <div class="call-avatar"><i class="fa-solid fa-phone"></i></div>
+        <h2 id="call-status" style="color:white; margin-bottom:10px;">กำลังโทร...</h2>
+        <p style="color:var(--text-sub); margin-bottom: 30px;">ระบบจะดังขึ้น รอให้ผู้สูงอายุกดปุ่มสีเขียวเพื่อคุย</p>
+        <button class="btn" style="background: var(--danger); width: 80px; height: 80px; border-radius: 50%; font-size: 2rem;" onclick="endCall()"><i class="fa-solid fa-phone-slash"></i></button>
     </div>
 
     <div id="crop-modal" class="overlay" style="z-index: 10001;">
@@ -158,7 +171,8 @@
                         <div class="stat-box">อารมณ์<span class="stat-value" id="stat-mood" style="color:var(--warning);">ปกติ</span></div>
                     </div>
                     <div style="display:flex; gap:10px; margin-top:10px;">
-                        <button class="btn" style="background: var(--success); margin:0; width:100%;" onclick="openSnapshot()"><i class="fa-solid fa-camera"></i> แคปสรุปรายวัน</button>
+                        <button class="btn" style="background: var(--success); margin:0; flex:1;" onclick="openSnapshot()"><i class="fa-solid fa-camera"></i> แคปสรุปรายวัน</button>
+                        <button class="btn" style="background: var(--primary-grad); margin:0; flex:1;" onclick="startVoiceCall()"><i class="fa-solid fa-phone"></i> โทรหา (เสียง)</button>
                     </div>
                 </div>
 
@@ -248,7 +262,7 @@
     </div>
 
     <script>
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzph3otQ0ERZxWxwb8t-GrJbDeuzz9K4zMUCl4DpacNNItpZXX5OgoRKKwqfymLLn6fAw/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbylXf_kfZmAo2qN2UTnF4NpIfUhadHRflMLr2CAkqOXLI8rlTnBTRoVtyYty_IX1MH6/exec";
         const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', { keepalive: 30 });
         let TARGET_ID = localStorage.getItem('ELDER_TARGET_ID');
         let html5QrCode, onlineTimer, chartInstance;
@@ -346,6 +360,7 @@
             client.subscribe(`familycare/${TARGET_ID}/status/#`); 
             client.subscribe(`familycare/${TARGET_ID}/command/pills_update`); 
             client.subscribe(`familycare/${TARGET_ID}/command/profile_updated`); 
+            client.subscribe(`familycare/${TARGET_ID}/webrtc/#`); 
 
             client.on('message', (topic, message) => {
                 const payload = message.toString(); const type = topic.split('/').pop();
@@ -378,6 +393,7 @@
                     if(data.error === "INACTIVITY") { addLog(`🚨 นิ่งนานผิดปกติ!`); document.getElementById('sos-alert').querySelector('h2').innerText = "🚨 ผู้สูงอายุนิ่งนานเกินกำหนด!"; } 
                     else { addLog(`🚨 กด SOS!`); document.getElementById('sos-alert').querySelector('h2').innerText = "🚨 ฉุกเฉิน! ผู้สูงอายุกด SOS!";}
                 }
+                else if(topic.includes('webrtc')) handleWebRTCSignal(type, payload); 
             });
             client.publish(`familycare/${TARGET_ID}/command/request_sync`, "true");
         }
@@ -411,6 +427,26 @@
             const ctx = document.getElementById('healthChart').getContext('2d'); if(chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [ { label: 'SYS', data: sysData, borderColor: '#EF4444' }, { label: 'DIA', data: diaData, borderColor: '#F59E0B' }, { label: 'ชีพจร', data: hrData, borderColor: '#10B981' } ] }, options: { responsive: true } });
         }
+
+        // WebRTC
+        let peerConnection, localStream; const rtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+        async function startVoiceCall() {
+            document.getElementById('call-modal').style.display = 'flex'; document.getElementById('call-status').innerText = "กำลังต่อสาย...";
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true }); peerConnection = new RTCPeerConnection(rtcConfig);
+                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+                peerConnection.ontrack = event => { document.getElementById('remote-audio').srcObject = event.streams[0]; document.getElementById('call-status').innerText = "กำลังคุยสาย 📞"; };
+                peerConnection.onicecandidate = event => { if (event.candidate) client.publish(`familycare/${TARGET_ID}/webrtc/candidate_family`, JSON.stringify(event.candidate)); };
+                const offer = await peerConnection.createOffer(); await peerConnection.setLocalDescription(offer); client.publish(`familycare/${TARGET_ID}/webrtc/offer`, JSON.stringify(offer));
+            } catch (err) { showToast("เปิดไมค์ไม่ได้", "error"); endCall(); }
+        }
+        async function handleWebRTCSignal(type, payload) {
+            if(type === 'answer') { const answer = JSON.parse(payload); await peerConnection.setRemoteDescription(new RTCSessionDescription(answer)); } 
+            else if(type === 'candidate_elderly') { const candidate = JSON.parse(payload); if (peerConnection && peerConnection.remoteDescription) await peerConnection.addIceCandidate(new RTCIceCandidate(candidate)); }
+            else if(type === 'hangup') { endCallLocal(); showToast("อีกฝ่ายวางสายแล้ว", "info"); }
+        }
+        function endCall() { client.publish(`familycare/${TARGET_ID}/webrtc/hangup`, "true"); endCallLocal(); }
+        function endCallLocal() { document.getElementById('call-modal').style.display = 'none'; if (peerConnection) { peerConnection.close(); peerConnection = null; } if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; } }
 
         function addLog(msg) { const time = new Date().toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'}); logs.unshift({time, msg}); if(logs.length > 20) logs.pop(); localStorage.setItem('activityLogs_' + TARGET_ID, JSON.stringify(logs)); renderLogs(); }
         function renderLogs() { document.getElementById('activity-log').innerHTML = logs.map(l => `<div class="list-item" style="padding:10px;"><div style="color:var(--text-sub); width:60px;">${l.time}</div><div style="flex:1;">${l.msg}</div></div>`).join(''); }
