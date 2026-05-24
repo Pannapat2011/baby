@@ -402,7 +402,7 @@
         let hState = { s: 8, u: 3, f: 1, hr: 80, o2: 98, sys: 120, dia: 80, symp: { head: 0, stom: 0, tooth: 0, body: 0 } };
         function adj(key, val) { hState[key] += val; if(hState[key] < 0) hState[key] = 0; document.getElementById('v-'+key).innerText = hState[key]; }
         function setSymp(type, level) { hState.symp[type] = level; const btns = document.getElementById('g-'+type).children; for(let i=0; i<btns.length; i++) { btns[i].className = `symp-btn ${i===level ? 'active l'+i : ''}`; } }
-        
+
         function submitHealth() {
             let res = { s: hState.s, u: hState.u, f: hState.f, hr: hState.hr, o2: hState.o2, bp: `${hState.sys}/${hState.dia}`, symp: hState.symp, time: new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) };
             client.publish(`familycare/${TARGET_ID}/status/health`, JSON.stringify(res), {qos:0}); 
@@ -429,7 +429,7 @@
         }
 
         // WebRTC
-        let peerConnection, localStream; const rtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+        let peerConnection, localStream; let elderlyCandidateQueue = []; const rtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
         async function startVoiceCall() {
             document.getElementById('call-modal').style.display = 'flex'; document.getElementById('call-status').innerText = "กำลังต่อสาย...";
             try {
@@ -441,12 +441,26 @@
             } catch (err) { showToast("เปิดไมค์ไม่ได้", "error"); endCall(); }
         }
         async function handleWebRTCSignal(type, payload) {
-            if(type === 'answer') { const answer = JSON.parse(payload); await peerConnection.setRemoteDescription(new RTCSessionDescription(answer)); } 
-            else if(type === 'candidate_elderly') { const candidate = JSON.parse(payload); if (peerConnection && peerConnection.remoteDescription) await peerConnection.addIceCandidate(new RTCIceCandidate(candidate)); }
+            if(type === 'answer') {
+                const answer = JSON.parse(payload);
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+                while (elderlyCandidateQueue.length > 0) {
+                    let candidate = elderlyCandidateQueue.shift();
+                    await peerConnection.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.error(e));
+                }
+            } 
+            else if(type === 'candidate_elderly') {
+                const candidate = JSON.parse(payload);
+                if (peerConnection && peerConnection.remoteDescription) {
+                    await peerConnection.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.error(e));
+                } else {
+                    elderlyCandidateQueue.push(candidate);
+                }
+            }
             else if(type === 'hangup') { endCallLocal(); showToast("อีกฝ่ายวางสายแล้ว", "info"); }
         }
         function endCall() { client.publish(`familycare/${TARGET_ID}/webrtc/hangup`, "true"); endCallLocal(); }
-        function endCallLocal() { document.getElementById('call-modal').style.display = 'none'; if (peerConnection) { peerConnection.close(); peerConnection = null; } if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; } }
+        function endCallLocal() { document.getElementById('call-modal').style.display = 'none'; if (peerConnection) { peerConnection.close(); peerConnection = null; } if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; } elderlyCandidateQueue = []; }
 
         function addLog(msg) { const time = new Date().toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'}); logs.unshift({time, msg}); if(logs.length > 20) logs.pop(); localStorage.setItem('activityLogs_' + TARGET_ID, JSON.stringify(logs)); renderLogs(); }
         function renderLogs() { document.getElementById('activity-log').innerHTML = logs.map(l => `<div class="list-item" style="padding:10px;"><div style="color:var(--text-sub); width:60px;">${l.time}</div><div style="flex:1;">${l.msg}</div></div>`).join(''); }
